@@ -1,0 +1,35 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest
+.pytest_cache/
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+frontend/node_modules/
+backend/venv/
+data_ingestion/venv/
+
+# Environment variables
+.env
+
+# ChromaDB local storage
+chroma_db/
+data_ingestion/chroma_db/
+backend/chroma_db/
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS specific
+.DS_Store
+Thumbs.db
