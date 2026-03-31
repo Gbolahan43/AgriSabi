@@ -8,3 +8,6 @@ Requests
 chromadb
 sentence-transformers
 python-multipart
+pytest
+pytest-asyncio
+httpx

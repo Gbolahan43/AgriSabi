@@ -52,3 +52,21 @@ def symptom_query(symptoms_text: str, top_k: int = 5) -> str:
     except Exception as e:
         print(f"RAG Error: {e}")
         return "Knowledge base unavailable at the moment."
+
+def context_prefetch(user_profile: dict = None) -> str:
+    """
+    RAG Pre-fetch for Nova Sonic sessions.
+    Builds a query based on the user's primary crops or generic seasonal advice.
+    """
+    if user_profile and "primary_crops" in user_profile:
+        crops = ", ".join(user_profile["primary_crops"])
+        lga = user_profile.get("lga", "Nigeria")
+        month = "current month" # Mock, in prod we'd use datetime.now().strftime('%B')
+        query = f"{crops} {lga} {month} farming advice"
+        top_k = 10
+    else:
+        # Anonymous user query
+        query = "Nigeria smallholder farming seasonal advice common crop diseases"
+        top_k = 8
+        
+    return symptom_query(query, top_k=top_k)
