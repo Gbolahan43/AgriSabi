@@ -4,6 +4,7 @@ boto3
 pydantic
 pydantic-settings
 python-dotenv
-requests
+Requests
 chromadb
 sentence-transformers
+python-multipart

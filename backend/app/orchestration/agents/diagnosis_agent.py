@@ -1,10 +1,10 @@
 import json
-from ..core.prompts import SYMPTOM_EXTRACTION_PROMPT, TREATMENT_SYNTHESIS_PROMPT
-from ..services.bedrock import invoke_converse
-from ..services.rag import symptom_query
-from ..models.schemas import DiagnosisResponse
+from ...core.prompts import SYMPTOM_EXTRACTION_PROMPT, TREATMENT_SYNTHESIS_PROMPT
+from ...services.bedrock import invoke_converse
+from ...services.rag import symptom_query
+from ...models.schemas import DiagnosisResponse
 from fastapi import UploadFile
-from ..services.vision import encode_image, get_image_media_type
+from ...services.vision import encode_image, get_image_media_type
 
 async def handle(file: UploadFile) -> dict:
     # 1. Read and process image
