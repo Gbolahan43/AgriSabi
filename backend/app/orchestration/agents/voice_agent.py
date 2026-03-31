@@ -1,4 +1,4 @@
-from ..services import transcribe, polly, nova_sonic
+from ...services import transcribe, polly, nova_sonic
 from .advisory_agent import handle as advisory_handle
 from fastapi import WebSocket
 
@@ -19,13 +19,14 @@ async def handle(audio_bytes: bytes) -> dict:
         
         # Route to Advisory Agent to synthesize response based on text
         # (Mock payload schema)
-        response_text = await advisory_handle({"message": text})
+        advisory_response = await advisory_handle({"message": text})
+        response_text = advisory_response.get("message", "Error synthesizing")
         
         audio_out = polly.synthesize_speech(str(response_text), lang_code)
         
         # In a real app we'd save the audio to S3 and return a URL
         return {
             "transcript": text,
-            "response": response_text,
+            "response": str(response_text),
             "audio_url": "https://s3.placeholder.url/audio.mp3" # Mock
         }
