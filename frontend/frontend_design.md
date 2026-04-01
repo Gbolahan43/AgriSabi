@@ -1,54 +1,48 @@
-# AgriSabi Professional Frontend Design System
+# AI MASTER PROMPT: AgriSabi UI/UX Design System
+> **SYSTEM ROLE:** Act as an elite UI/UX Developer and Designer. Your objective is to translate this design specification into flawless, responsive Tailwind CSS and Shadcn UI components optimized primarily for mobile device form factors (smallholder farmers) while elegantly scaling to desktop.
 
-## 1. Design Aesthetic & Philosophy
-The AgriSabi frontend must completely bridge the gap between "local agricultural utility" and "enterprise-grade digital experience". We will use a **Vibrant Glassmorphism** aesthetic tailored to agrarian themes yet universally premium.
+## 1. Global Aesthetic & Responsiveness
+**Theme:** Vibrant Glassmorphism.
+**Colors (CSS Variables):**
+- `--primary`: `142 70% 29%` (Canopy Green)
+- `--secondary`: `38 92% 50%` (Harvest Amber)
+- `--background`: `0 0% 100%` (Light) / `222 47% 11%` (Dark)
+- `--surface`: `0 0% 100% / 0.7` (Frosted Glass)
 
-- **Vibrant Yet Grounded Palette**: Moving away from flat, generic "tech green", we will utilize rich, harmonious gradients. HSL tailored greens mixed with warm, earthy undertones (amber/ochre) to signify soil and growth, set against a sleek UI.
-- **Dynamic Interactivity**: The interface must feel alive. Hover states will feature fluid, 150ms-300ms transitions. The UI will prominently feature micro-animations (e.g., pulsing mic icons, shimmering skeleton loaders during RAG retrieval) to maintain the user's focus and reduce perceived latency.
-- **Premium Typography**: We will utilize **Outfit** (for bold, highly readable headers) and **Inter** (for crisp, dense data tables and chat interfaces).
+**Breakpoints (Mobile-First Strictness):**
+Design everything default for mobile (screens < 640px). 
+- `sm:` (640px) - Large phones/small tablets.
+- `md:` (768px) - iPads. Shift stacked vertical cards into 2-column grids.
+- `lg:` (1024px) - Desktop. Shift to 3-column grids, persistent sidebars instead of bottom tabs.
 
-## 2. Global Color System (Tailwind + CSS Variables)
-Instead of static hex codes, the application will lean heavily into semantic CSS variables injected directly into `index.css`, allowing for fluid theming (including a deep, premium Dark Mode) without rewriting utility classes.
+## 2. Screen-by-Screen UI Specification
 
-### Primary Accents
-- `primary`: Lush Canopy Green (e.g., `hsl(142, 70%, 29%)`)
-- `primary-glow`: Soft, diffused neon green for active states (Nova Sonic connection).
-- `secondary`: Harvest Amber (e.g., `hsl(38, 92%, 50%)`) for warnings, high-priority actions, and market price spikes.
+### 2.1 The Welcome/Landing Page (`/`)
+- **Mobile View**: Full-viewport height (`h-screen`). 60% of the upper screen is a rich agricultural illustration mask. The bottom 40% is a frosted glass card containing the title, subtitle, and a massive, glowing `w-full` primary CTA button: "Enter AgriSabi".
+- **Desktop (`lg:`) View**: Split screen (`grid-cols-2`). Left side contains typography and CTA (left-aligned). Right side contains the illustration.
 
-### Base & Surfaces
-- `background`: True clean white in Light Mode, deep midnight slate (`hsl(222, 47%, 11%)`) in Dark Mode.
-- `surface`: Frosted glass panels using `backdrop-blur-md` heavily across floating cards (like the Assistant overlay or Weather pill).
+### 2.2 The Main Dashboard (`/feed`)
+- **Top Nav**: Sticky glass header (`sticky top-0 backdrop-blur-md`). Contains a small "Weather Pill" showing temperature and an icon.
+- **Content Grid**: 
+  - Mobile: A vertical scroll of massive, tap-friendly feature cards (Diagnose Crop, Market Prices, AI Chat). 
+  - Desktop: A `md:grid-cols-3` layout.
+- **Market Ticker**: A continuous CSS-animated marquee (`overflow-hidden whitespace-nowrap`) pinned just below the header. Amber numbers for rising prices, Green for stable.
 
-## 3. Core Component Designs
+### 2.3 The Diagnosis Hub (`/diagnose`)
+- **Upload Zone**: A `min-h-[250px]` container with `border-dashed border-2 rounded-3xl`. 
+  - *Interaction*: When a user drags a file (or taps to open native camera roll), the border glows `--primary` and scales up `scale-105` using Tailwind `transition-transform duration-300`.
+- **Results View**: Once diagnosed, the upload zone shrinks. A Shadcn `Accordion` appears.
+  - *Mobile*: The "Confidence Meter" (circular SVG progress bar) is sticky at the bottom of the screen.
+  - *Desktop*: Confidence Meter sits in a right-hand sidebar.
 
-### 3.1 The Nova Sonic Live Assistant (Voice Interface)
-- **Visualizer Overlay**: When the user taps the persistent "Live Assistant" floating action button, a bottom-sheet (mobile) or floating modal (desktop) slides up with a smooth cubic-bezier curve.
-- **State Animations**: 
-  - *Listening*: A subtle, breathing radial gradient underneath the microphone ring.
-  - *Thinking*: A horizontal, shimmering gradient across the UI.
-  - *Speaking*: Dynamic audio wavelength bars corresponding to the TTS volume.
+### 2.4 The Live Assistant Overlay (Global)
+- **Component Type**: Mobile uses Shadcn `Drawer` (slides up from bottom, snap points at 50% and 100%). Desktop uses Shadcn `Dialog` (centered floating modal).
+- **Audio Visualizer**: Three vertical bars centered on the screen. 
+  - *Animation*: Use CSS keyframes to animate `height` randomly when the bot is speaking (`animate-pulse` mixed with scale transforms).
+- **Controls**: A massive, circular, floating action button (FAB) painted in a `--primary-glow` radial gradient to mute/unmute the microphone.
 
-### 3.2 The Two-Stage Diagnosis Hub (Camera/Upload)
-- **Dropzone**: A large, rounded (e.g., `rounded-3xl`) dashed container that glows green upon dragging an image.
-- **Diagnostic Result Card**: 
-  - *Symptom Chips*: Small, rounded pills highlighting extracted keywords from Stage 1.
-  - *Confidence Meter*: A circular progress bar animating from 0 to the Bedrock confidence score (e.g., 85%).
-  - *Treatment Sections*: Accordions expanding smoothly to reveal Chemical vs. Organic treatments, heavily utilizing Shadcn UI's `Accordion` primitives customized with fluid entry animations.
-
-### 3.3 The Landing Page (Welcome Screen)
-- **Hero Section**: A powerful, sweeping gradient background with a high-quality illustration or image of African agriculture. Large, bold typography setting the pitch: "Bridging the Gap Between Research and the African Farmer."
-- **Feature Showcase**: Smooth, staggering fade-in cards highlighting the three core pillars: Instant Diagnosis, Live Native Voice Assistant, and Real-time Market Data.
-- **Frictionless Entry**: Since the app is currently free and open without authentication, a massive, glowing primary call-to-action button saying "Enter AgriSabi" or "Start Diagnosing Now" that immediately drops them into the `/feed` route.
-
-### 3.4 Dashboard / Feed
-- **Weather Pill**: Glass-effect pill showing immediate temperature and weather conditions, pinned to the top nav.
-- **Market Ticker**: A continuously scrolling marquee of crop prices, color-coded (Amber for rising, Green for stable).
-
-## 4. Typography & Spacing
-- **Headers**: Minimal weight differences. `font-medium` or `font-semibold` with tight tracking (`tracking-tight`) for an editorial, app-like feel.
-- **Gradients**: Text gradients on primary calls-to-action (e.g., "Diagnose Crop") to draw the eye immediately.
-
-## 5. UI/UX Guiding Principles
-- **No Placeholders**: We will rely on beautifully styled generic SVGs (Lucide React) if active data isn't available, never raw broken structures.
-- **Zero-Layout-Shift**: Skeletons will be sized exactly to the data they replace to prevent the screen from jumping when AWS returns data.
-- **Progressive Disclosure**: Detailed agricultural data (like pesticide mixing instructions) will be hidden behind smooth "View More" toggles to avoid overwhelming smallholder farmers on small local devices.
+## 3. Strict UI Rules for AI Generation
+1. **Zero Layout Shift**: Never allow a loading state to collapse the DOM height. Always use `Skeleton` components sized exactly to the final data dimensions.
+2. **Touch Targets**: All interactive elements (buttons, links, dropzones) must have a minimum `min-h-[44px]` and `min-w-[44px]` to satisfy mobile accessibility standards.
+3. **Typography Scaling**: Use fluid typography scaling (`text-sm md:text-base lg:text-lg`) to ensure readability outdoors in bright sunlight.
+4. **Dark Mode Native**: Every single Tailwind class must have a `dark:` variant considered. Do not hardcode `bg-white`, use `bg-background`.

@@ -1,62 +1,53 @@
-# AgriSabi Expert Frontend Architecture & Build Plan
+# AI MASTER PROMPT: AgriSabi Engineering & Architecture Build
+> **SYSTEM ROLE:** Act as an elite Senior Next.js 14 Web Engineer. Your objective is to build a robust, edge-ready, progressive web application (PWA) using React Server Components, Zustand, and strict TypeScript syncing with a FastAPI backend.
 
-## 1. Technology Stack
-To support the high-scale AWS Bedrock backend and the visually rich design system, the frontend will be built on the latest standard for enterprise React applications:
+## 1. Core Stack Instructions
+- **Framework**: Next.js 14 (App Router exclusively). No `pages/` directory.
+- **Language**: TypeScript (`strict: true`). You MUST define interfaces for all API contracts before implementing components.
+- **Styling**: Tailwind CSS configuration utilizing CSS variables for dynamic theming.
+- **State**: `zustand` for global state (User Preferences, Offline Queues, WebSocket Live Audio State).
+- **Data Fetching**: Use standard `fetch` API inside React Server Components where possible; use `react-query` or standard Axios hooks for heavy client-side mutations (like Image Uploads).
 
-- **Core Framework**: Next.js 14+ (App Router). Crucial for aggressive edge caching, SEO optimization, and seamless API route proxying.
-- **Language**: TypeScript (Strict Mode). Ensures type safety syncing directly with our OpenAPI backend schemas (e.g., `DiagnosisResponse`).
-- **Styling**: Tailwind CSS + standard CSS modules for isolated micro-animations.
-- **Component Library**: shadcn/ui. We will extract the raw Radix UI primitives and aggressively customize them to match our "Vibrant Glassmorphism" design system.
-- **State Management**: Zustand. Used exclusively for managing the global state of the Nova Sonic WebSocket and User Preferences (Language/Location).
-- **Data Fetching**: React Query (TanStack) for caching market data, weather data, and offline mutations.
-
-## 2. Directory Structure (App Router)
-
-Since we are prioritizing frictionless access (No Auth for MVP), we will utilize a flat routing structure where the root is our highly converting Landing Page, dropping users directly into the web application.
-
+## 2. Directory Architecture & Routing execution
+Execute the directory structure exactly as follows:
 ```text
-frontend/
-├── src/
-│   ├── app/                    # Next.js 14 App Router
-│   │   ├── page.tsx            # The Welcome / Landing Page (Hero, Value Prop)
-│   │   ├── feed/               # Main Dashboard (Weather, Actions, Ticker)
-│   │   ├── diagnose/           # Two-Stage Image upload & RAG results
-│   │   ├── chat/               # Async text/audio messaging (Tier 2 Indigenous)
-│   │   ├── market/             # Real-time market prices grid
-│   │   ├── history/            # Ledger of past queries
-│   │   ├── api/                # Next.js API Routes (BFF proxies to FastAPI)
-│   │   ├── layout.tsx          # Root Layout (Nav, Global Context, Assistant Overlay)
-│   │   └── globals.css         # Tailwind & Shadcn variable overrides
-│   ├── components/             # Reusable UI
-│   │   ├── ui/                 # Shadcn primitives (Buttons, Cards, Modals)
-│   │   ├── features/           # Complex blocks (VoiceVisualizer, DiagnosisDropzone)
-│   │   └── svgs/               # Custom icons & illustrations
-│   ├── hooks/                  # Custom React Hooks
-│   │   ├── useNovaSonic.ts     # WebSocket bidirectional audio manager
-│   │   └── useDiagnosis.ts     # Multipart form data uploader
-│   ├── lib/                    # Utilities & API Clients
-│   │   ├── api.ts              # Axios/Fetch interceptors wrapping the FastAPI backend
-│   │   └── utils.ts            # Tailwind `cn` merger utilities
-│   └── store/                  # Zustand Global State
-│       └── useStore.ts         # User language, offline queue
+src/
+├── app/
+│   ├── layout.tsx         # Injects RootProviders, Zustand Hydration, PWA Manifest
+│   ├── globals.css        # Core Tailwind/Shadcn variables
+│   ├── page.tsx           # Landing Screen (Server Component)
+│   ├── (main)/            # Route Group sharing the MainNav + Floating Assistant FAB
+│   │   ├── feed/page.tsx
+│   │   ├── diagnose/page.tsx
+│   │   ├── chat/page.tsx
+│   │   └── market/page.tsx
+├── components/
+│   ├── ui/                # Raw Shadcn primitives
+│   ├── shared/            # Cross-page components (e.g., WeatherPill.tsx, AudioVisualizer.tsx)
+│   └── forms/             # Client-side form handlers heavily utilizing react-hook-form
+├── store/
+│   └── useNovaSonic.ts    # Zustand store tracking audio buffer arrays and WebRTC/WebSocket states
+├── lib/
+│   └── api.ts             # Axios interceptor configured to hit http://localhost:8000
 ```
 
-## 3. Key Implementation Details
+## 3. Critical Engineering Tasks for AI
 
-### 3.1 Next.js Backend-For-Frontend (BFF)
-Instead of exposing the FastAPI endpoints (`localhost:8000/diagnose`) directly to the browser, the Next.js App Router will proxy requests via `src/app/api/...`. This provides a critical security layer hiding AWS interactions and allows us to aggressively cache static data (like the offline Knowledge Base manifest) at the Next.js Edge.
+### Task A: The Diagnosis Uploader (`/diagnose`)
+- **Requirement**: Use standard HTML5 `<input type="file" accept="image/jpeg, image/png" capture="environment" />` to trigger the native mobile camera seamlessly.
+- **Handling**: Compress the image using a lightweight canvas script *before* sending via `FormData` to `/diagnose`, saving the user's mobile data bandwidth.
+- **Hook**: Create `useDiagnoseMutation()` which posts to the proxy API and returns the rigorous `DiagnosisResponse` schema.
 
-### 3.2 WebSocket Streaming Hook (`useNovaSonic.ts`)
-The true difficulty of the frontend build lies in the Live Assistant feature.
-- **Audio Worklets**: We will rely on browser Web Audio API to capture raw microphone PCM data, chunk it, and stream it over the WebSocket to our `ws://backend/assistant/stream` endpoint.
-- **Responsive State**: The hook will expose active states (`isConnecting`, `isListening`, `isVocalizing`) so the UI can instantly respond with the correct glowing/pulsing animations designed in `frontend_design.md`.
+### Task B: Offline PWA Strategy
+- **Requirement**: Implement `next-pwa` in `next.config.js`. 
+- **Caching**: Configure Workbox strategies: `NetworkFirst` for `/api/market`, `CacheFirst` for JS/CSS assets, and `StaleWhileRevalidate` for user history. 
+- **Graceful Degradation**: If the user loses internet during a `/chat` request, the app should save the payload to localForage (IndexedDB) and display a distinct "Pending Internet Connection" toast.
 
-### 3.3 Tailoring Shadcn UI
-When deploying Shadcn UI components, we will intercept and modify `components.json` to leverage CSS variables (e.g., `bg-primary`, `text-primary-foreground`). We will strictly avoid hardcoding colors inside the components themselves to guarantee Dark Mode compatibility seamlessly.
+### Task C: Nova Sonic WebSocket Hook (`useNovaSonic.ts`)
+- **Requirement**: Build a custom React hook that manages a raw `WebSocket` connection to `ws://backend/assistant/stream`.
+- **Web Audio API**: It must request browser `getUserMedia({ audio: true })`. Chunk the PCM audio stream into Base64 or binary frames and emit them over the socket.
+- **Lifecycle**: Ensure the WebSocket cleans up automatically `onUnmount` or when the user closes the global Drawer overlay to prevent massive memory leaks on Android devices.
 
-### 3.4 SEO and PWA Configurations
-- **Manifest**: Automatic injection of `manifest.json` turning the web app into an installable PWA for Android users (crucial for Nigerian smallholder adoption).
-- **Offline Fallback**: Utilizing Service Workers (via `next-pwa`) to cache the core application shell, allowing users to view cached weather or market data even on 2G/3G network drops in rural zones.
-
-## 4. Build Phase Readiness
-Do **not** initiate `npx create-next-app` until the User explicitly greenlights the initialization. Upon approval, the build script will be executed with non-interactive flags conforming precisely to this architecture.
+## 4. Coding Standards
+1. **Client vs Server**: Default all components to Server Components. Only add `"use client"` at the very leaf node of the component tree (e.g., inside the specific `<button onClick>` component, not the whole layout).
+2. **Error Boundaries**: Every nested route segment must have an `error.tsx` file capturing API failures gracefully with an elegant "Retry" button.
