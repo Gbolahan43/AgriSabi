@@ -33,3 +33,17 @@ backend/chroma_db/
 # OS specific
 .DS_Store
 Thumbs.db
+
+# Frontend (Next.js & Node)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.vercel/
+frontend/.turbo/
+frontend/coverage/
+frontend/*.log
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local

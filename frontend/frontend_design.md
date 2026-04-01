@@ -35,7 +35,12 @@ Instead of static hex codes, the application will lean heavily into semantic CSS
   - *Confidence Meter*: A circular progress bar animating from 0 to the Bedrock confidence score (e.g., 85%).
   - *Treatment Sections*: Accordions expanding smoothly to reveal Chemical vs. Organic treatments, heavily utilizing Shadcn UI's `Accordion` primitives customized with fluid entry animations.
 
-### 3.3 Dashboard / Feed
+### 3.3 The Landing Page (Welcome Screen)
+- **Hero Section**: A powerful, sweeping gradient background with a high-quality illustration or image of African agriculture. Large, bold typography setting the pitch: "Bridging the Gap Between Research and the African Farmer."
+- **Feature Showcase**: Smooth, staggering fade-in cards highlighting the three core pillars: Instant Diagnosis, Live Native Voice Assistant, and Real-time Market Data.
+- **Frictionless Entry**: Since the app is currently free and open without authentication, a massive, glowing primary call-to-action button saying "Enter AgriSabi" or "Start Diagnosing Now" that immediately drops them into the `/feed` route.
+
+### 3.4 Dashboard / Feed
 - **Weather Pill**: Glass-effect pill showing immediate temperature and weather conditions, pinned to the top nav.
 - **Market Ticker**: A continuously scrolling marquee of crop prices, color-coded (Amber for rising, Green for stable).
 

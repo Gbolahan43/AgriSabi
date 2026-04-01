@@ -12,16 +12,20 @@ To support the high-scale AWS Bedrock backend and the visually rich design syste
 
 ## 2. Directory Structure (App Router)
 
+Since we are prioritizing frictionless access (No Auth for MVP), we will utilize a flat routing structure where the root is our highly converting Landing Page, dropping users directly into the web application.
+
 ```text
 frontend/
 ├── src/
 │   ├── app/                    # Next.js 14 App Router
-│   │   ├── (dashboard)/        # Route Group (requires auth/layout)
-│   │   │   ├── diagnose/       # Image upload & RAG result page
-│   │   │   ├── market/         # Realtime market prices
-│   │   │   └── page.tsx        # Main Feed & Weather
+│   │   ├── page.tsx            # The Welcome / Landing Page (Hero, Value Prop)
+│   │   ├── feed/               # Main Dashboard (Weather, Actions, Ticker)
+│   │   ├── diagnose/           # Two-Stage Image upload & RAG results
+│   │   ├── chat/               # Async text/audio messaging (Tier 2 Indigenous)
+│   │   ├── market/             # Real-time market prices grid
+│   │   ├── history/            # Ledger of past queries
 │   │   ├── api/                # Next.js API Routes (BFF proxies to FastAPI)
-│   │   ├── layout.tsx          # Root Layout (Nav, Global Context)
+│   │   ├── layout.tsx          # Root Layout (Nav, Global Context, Assistant Overlay)
 │   │   └── globals.css         # Tailwind & Shadcn variable overrides
 │   ├── components/             # Reusable UI
 │   │   ├── ui/                 # Shadcn primitives (Buttons, Cards, Modals)
