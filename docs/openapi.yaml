@@ -1,0 +1,153 @@
+openapi: 3.1.0
+info:
+  title: AgriSabi Backend API
+  version: 1.1.0
+  description: Core orchestration API for the AgriSabi agricultural extension platform. Supports two-stage crop diagnosis, offline-ready multilingual voice routing, and bidirectional Live Assistant streaming.
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+  - url: https://api.agrisabi.com
+    description: Production server
+paths:
+  /diagnose:
+    post:
+      summary: Two-Stage Crop Diagnosis
+      description: Upload a crop image to extract symptoms via Vision LLM, cross-referenced with local RAG knowledge base for treatment guidelines.
+      operationId: diagnoseCrop
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: JPEG/PNG uploaded image of the crop.
+      responses:
+        '200':
+          description: Successful diagnosis with treatment synthesis.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiagnosisResponse'
+        '400':
+          description: Invalid file format uploaded.
+        '422':
+          description: Unprocessable image or symptom mapping failure.
+
+  /voice:
+    post:
+      summary: Voice Routing (Tier 1 vs Tier 2)
+      description: Captures raw audio, matches language via 2-second clip. Routes English/Pidgin (Tier 1) users to fallback prompt or redirects to WebSocket; translates Indigenous languages via Polly/Transcribe pipeline.
+      operationId: routeVoice
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Raw WAV/MP3 audio payload.
+      responses:
+        '200':
+          description: Audio successfully processed (Tier 2).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceResponse'
+        '422':
+          description: Client should redirect to Live Assistant WebSocket (Tier 1 threshold met).
+
+  /assistant/stream:
+    get:
+      summary: Nova Sonic Live Assistant WebSocket
+      description: Initiates a pure bidirectional AWS Bedrock stream. Context is pre-fetched upon connection via user session parameters.
+      operationId: assistantStream
+      parameters:
+        - name: session_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '101':
+          description: Switching Protocols - WebSocket connected.
+        '403':
+          description: Invalid session origin.
+
+components:
+  schemas:
+    DiagnosisResponse:
+      type: object
+      required:
+        - symptoms_observed
+        - image_quality
+        - possible_diseases
+        - confidence_level
+        - expert_referral_recommended
+        - transparency_label
+      properties:
+        symptoms_observed:
+          type: array
+          items:
+            type: string
+        image_quality:
+          type: string
+          enum: [good, acceptable, poor]
+        possible_diseases:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              likelihood:
+                type: string
+                enum: [high, medium, low]
+              source:
+                type: string
+              treatment_organic:
+                type: array
+                items:
+                  type: string
+              treatment_chemical:
+                type: array
+                items:
+                  type: string
+              dosage:
+                type: string
+                nullable: true
+              precautions:
+                type: array
+                items:
+                  type: string
+        confidence_level:
+          type: string
+          enum: [high, medium, low]
+        expert_referral_recommended:
+          type: boolean
+        transparency_label:
+          type: string
+        retake_guidance:
+          type: string
+          nullable: true
+
+    VoiceResponse:
+      type: object
+      required:
+        - transcript
+        - response
+        - audio_url
+      properties:
+        transcript:
+          type: string
+        response:
+          type: string
+        audio_url:
+          type: string
+          format: uri
