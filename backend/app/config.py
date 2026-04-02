@@ -7,10 +7,9 @@ class Settings(BaseSettings):
     CORS_ALLOWED_ORIGINS: str = "*"
 
     # Bedrock configuration
-    BEDROCK_AGENT_ID: str = ""
-    BEDROCK_AGENT_ALIAS_ID: str = ""
     BEDROCK_KB_ID: str = ""
-    BEDROCK_GUARDRAIL_ID: str = ""
+    PRIMARY_MODEL_ID: str = "anthropic.claude-sonnet-4-5-20250929-v1:0"
+    FALLBACK_MODEL_ID: str = "anthropic.claude-opus-4-6-v1:0"
     NOVA_SONIC_MODEL_ID: str = "amazon.nova-sonic-v1:0"
 
     # DynamoDB Tables

@@ -26,8 +26,9 @@ AgriSabi must be restricted strictly to agricultural advice to prevent hallucina
    - Add a topic named `Non_Agricultural_Advice`.
    - Definition: `Any topic universally unrelated to crops, farming, market prices, livestock, or agricultural science. Specifically deny human medical advice, legal advice, or politics.`
    - Click Next.
-6. **Word filters**: Skip / Leave blank. Click Next.
-7. **PII filters**: Skip / Leave blank. Click Next.
+6. **Word filters & PII filters**: Skip / Leave blank. Click Next.
+7. **Blocked messaging**: 
+   - Denied topics/context messaging: `"I am AgriSabi, an agricultural extension agent. I can only assist you with farming, crop diagnosis, agricultural markets, and rural livelihoods."`
 8. **Review and create**: Review your settings and click Create.
 9. **CRITICAL**: Once created, look at the Guardrail details page and copy the **Guardrail ID**. Paste this into your `backend/.env` file as `BEDROCK_GUARDRAIL_ID`.
 
@@ -48,15 +49,4 @@ This seamlessly connects your S3 PDFs to an OpenSearch Vector database.
 8. Once finished, click the **Data source** tab on the KB page and click **Sync**. This reads your PDFs and vectorizes them.
 9. **CRITICAL**: Copy the **Knowledge base ID** at the top of the page. Paste this into your `backend/.env` file as `BEDROCK_KB_ID`.
 
----
 
-## 4. Create the Bedrock Agent
-1. In Bedrock, go to **Builder tools** -> **Agents**. click **Create agent**.
-2. **Name**: Enter `agrisabi-core-agent`.
-3. **Model details**: Select **Anthropic Claude 3.5 Sonnet**.
-4. **Instructions**: Copy the entire underlying text from our `TREATMENT_SYNTHESIS_PROMPT` (located in `app/core/prompts.py`) into this box. Add: *"You are an expert Nigerian agricultural extension worker."*
-5. **Knowledge bases**: Click Add, and select the `agrisabi-kb` you just made. Write the instruction: *"Use this knowledge base to find treatment instructions for crop diseases based on symptoms."*
-6. Click **Save** at the top.
-7. **CRITICAL**: Click **Prepare** in the top right corner. Wait for the green success banner.
-8. **Alias**: Click the **Create Alias** button. Name the alias `production` or `v1`.
-9. **CRITICAL**: On the main Agent page, copy the **Agent ID**. Then, copy the **Alias ID**. Paste these into your `.env` file as `BEDROCK_AGENT_ID` and `BEDROCK_AGENT_ALIAS_ID`.

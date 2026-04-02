@@ -47,3 +47,6 @@ frontend/.env.local
 frontend/.env.development.local
 frontend/.env.test.local
 frontend/.env.production.local
+
+# Raw Data (PDFs, Source Materials)
+docs/raw_data/
