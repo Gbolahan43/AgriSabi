@@ -1,106 +1,111 @@
+import os
 import json
-from ...core.prompts import SYMPTOM_EXTRACTION_PROMPT, TREATMENT_SYNTHESIS_PROMPT
-from ...services.bedrock import invoke_converse
-from ...services.rag import symptom_query
-from ...models.schemas import DiagnosisResponse
+import boto3
 from fastapi import UploadFile
-from ...services.vision import encode_image, get_image_media_type
+from ...services.rag import symptom_query
+
+SONNET_MODEL = os.getenv("PRIMARY_MODEL_ID", "anthropic.claude-3-5-sonnet-20240620-v1:0")
+bedrock_client = boto3.client('bedrock-runtime', region_name=os.getenv("AWS_REGION", "us-east-1"))
+
+SYMPTOM_EXTRACTION_PROMPT = """
+You are an expert crop pathologist. You are looking at a photo taken by a farmer.
+Your task is ONLY to extract visual symptoms. DO NOT name a disease. DO NOT offer arbitrary treatment.
+Describe color changes, spots, lesions, patterns, and which parts of the plant are affected.
+
+You must reply strictly in the following JSON format:
+{
+  "symptoms": ["list", "of", "raw", "visual", "observations"],
+  "affected_parts": ["leaves", "stem", "fruit"],
+  "severity": "mild/moderate/severe",
+  "image_quality": "good/acceptable/poor"
+}
+"""
+
+TREATMENT_SYNTHESIS_PROMPT = """
+You are AgriSabi, a trusted agricultural AI. Given the following raw symptoms extracted from a crop, 
+and the retrieved knowledge snippets below (which come from verified IITA/NCRI agricultural manuals), 
+determine the most likely disease(s) and provide the correct organic and chemical treatments.
+
+RULES:
+1. You may ONLY name diseases that are mentioned in the retrieved knowledge snippets. If the symptoms don't match anything in the snippets, admit that the disease is not in your current agricultural database.
+2. Provide a single structured JSON response exactly matching the defined schema.
+3. Your tone should be serious and helpful.
+4. Provide a confidence percentage between 0 and 100 based on how well the symptoms match the retrieved documents.
+
+Retrieved KB Snippets:
+{kb_context}
+
+Raw Symptoms:
+{raw_symptoms}
+
+Respond strictly in the following JSON schema:
+{
+    "disease": "string",
+    "confidence": 0,
+    "scientific_name": "string",
+    "symptoms": ["string"],
+    "organic_treatments": ["string"],
+    "chemical_treatments": ["string"]
+}
+"""
 
 async def handle(file: UploadFile) -> dict:
-    # 1. Read and process image
-    image_bytes = await encode_image(file)
-    image_format = get_image_media_type(file.filename)
+    image_bytes = await file.read()
     
-    # 2. STAGE 1 - SYMPTOM EXTRACTION (Vision)
-    messages_stage_1 = [
+    # STAGE 1: Symptom Extraction (Vision)
+    messages = [
         {
             "role": "user",
             "content": [
+                {"text": SYMPTOM_EXTRACTION_PROMPT},
                 {
                     "image": {
-                        "format": image_format,
+                        "format": "png",  # Adjust if extending to jpeg dynamically
                         "source": {"bytes": image_bytes}
                     }
-                },
-                {
-                    "text": "Please analyze this crop image and output the symptoms strictly according to the system prompt JSON schema."
                 }
             ]
         }
     ]
     
-    print("Executing Stage 1: Symptom Extraction...")
-    stage_1_response = await invoke_converse(
-        messages=messages_stage_1,
-        system_prompt=SYMPTOM_EXTRACTION_PROMPT
-    )
-    
-    if not stage_1_response:
-        return {"error": "Failed to extract symptoms from the image"}
-        
     try:
-        # Claude returns markdown wrapped JSON sometimes, stripping it
-        cleaned_json = stage_1_response.replace("```json", "").replace("```", "").strip()
-        symptoms_data = json.loads(cleaned_json)
+        response = bedrock_client.converse(
+            modelId=SONNET_MODEL,
+            messages=messages,
+            inferenceConfig={"maxTokens": 500, "temperature": 0.1}
+        )
+        stage1_output = response['output']['message']['content'][0]['text']
+        extraction = json.loads(stage1_output)
+        
+        if extraction.get("image_quality") == "poor":
+            return {"error": "Image is too blurry or obscured to accurately extract symptoms. Please retake the photo."}
+            
+        symptom_string = ", ".join(extraction.get("symptoms", []))
+        
     except Exception as e:
-        print(f"Failed to parse Stage 1 JSON: {e}")
-        return {"error": "Failed to parse symptom data"}
+        print(f"Stage 1 Error: {e}")
+        return {"error": "Failed to analyze image visually."}
         
-    # Check image quality hook
-    if symptoms_data.get("image_quality") == "poor":
-        return {
-            "symptoms_observed": [],
-            "image_quality": "poor",
-            "possible_diseases": [],
-            "confidence_level": "low",
-            "expert_referral_recommended": True,
-            "transparency_label": "AI-assisted screening. Confirm with your extension worker before treating high-value crops.",
-            "retake_guidance": "The image quality is too poor to analyze. Please retake the photo ensuring it is well-lit and the crop symptoms are clearly visible."
-        }
-        
-    # 3. STAGE 2 - RAG DISEASE MATCHING
-    symptoms_list = symptoms_data.get("symptoms", [])
-    if not symptoms_list:
-        return {"error": "No visible symptoms found to analyze"}
-        
-    symptoms_text = ", ".join(symptoms_list)
-    print(f"Symptoms found: {symptoms_text}")
-    print("Executing Stage 2: Knowledge Base Retrieval...")
-    
-    # Retrieve from ChromaDB
-    context_chunks = symptom_query(symptoms_text, top_k=5)
-    
-    # Format the prompt
-    synthesis_prompt = TREATMENT_SYNTHESIS_PROMPT.replace(
-        "{context}", context_chunks
-    ).replace(
-        "{symptoms_text}", symptoms_text
-    )
-    
-    messages_stage_2 = [
-        {
-            "role": "user",
-            "content": [{"text": f"Based on these symptoms: {symptoms_text}, what diseases match from the retrieved context? Remember to output strictly matching the JSON schema."}]
-        }
-    ]
-    
-    print("Executing Stage 2: Treatment Synthesis...")
-    stage_2_response = await invoke_converse(
-        messages=messages_stage_2,
-        system_prompt=synthesis_prompt
-    )
-    
-    if not stage_2_response:
-        return {"error": "Failed to synthesize treatment plan"}
-        
+    # STAGE 2: RAG Resolution
     try:
-        cleaned_response = stage_2_response.replace("```json", "").replace("```", "").strip()
-        diagnosis_data = json.loads(cleaned_response)
+        # 1. Fetch relevant IITA/NCRI documents based on exact symptoms
+        kb_context = symptom_query(symptom_string)
         
-        # Override image_quality from stage 1 just to be accurate
-        diagnosis_data["image_quality"] = symptoms_data.get("image_quality", "acceptable")
+        # 2. Synthesize treatment
+        synthesis_prompt = TREATMENT_SYNTHESIS_PROMPT.format(
+            kb_context=kb_context,
+            raw_symptoms=symptom_string
+        )
         
-        return diagnosis_data
+        response2 = bedrock_client.converse(
+            modelId=SONNET_MODEL,
+            messages=[{"role": "user", "content": [{"text": synthesis_prompt}]}],
+            inferenceConfig={"maxTokens": 1000, "temperature": 0.2}
+        )
+        
+        final_diagnosis_str = response2['output']['message']['content'][0]['text']
+        return json.loads(final_diagnosis_str)
+        
     except Exception as e:
-        print(f"Failed to parse Stage 2 JSON: {e}")
-        return {"error": "Failed to parse diagnosis output"}
+        print(f"Stage 2 Error: {e}")
+        return {"error": "Failed to resolve symptoms against the knowledge base."}
