@@ -7,29 +7,54 @@ from app.core.guardrails import guardrail
 from app.core.prompts import ADVISORY_SYSTEM_PROMPT
 from app.services import dynamo
 from app.services.weather import get_current_weather
+from app.services.soil import get_soil_data
 
 bedrock_client = boto3.client('bedrock-runtime', region_name=os.getenv("AWS_REGION", "us-east-1"))
 MODEL_ID = os.getenv("FALLBACK_MODEL_ID", "anthropic.claude-3-5-sonnet-20240620-v1:0")
 
 TOOL_CONFIG = {
-    "tools": [{
-        "toolSpec": {
-            "name": "get_current_weather",
-            "description": "Get the current weather conditions for a specific location in Nigeria.",
-            "inputSchema": {
-                "json": {
-                    "type": "object",
-                    "properties": {
-                        "location_name": {
-                            "type": "string",
-                            "description": "The name of the city, LGA, or state in Nigeria"
-                        }
-                    },
-                    "required": ["location_name"]
+    "tools": [
+        {
+            "toolSpec": {
+                "name": "get_current_weather",
+                "description": "Get the current weather conditions for a specific location in Nigeria.",
+                "inputSchema": {
+                    "json": {
+                        "type": "object",
+                        "properties": {
+                            "location_name": {
+                                "type": "string",
+                                "description": "The name of the city, LGA, or state in Nigeria"
+                            }
+                        },
+                        "required": ["location_name"]
+                    }
+                }
+            }
+        },
+        {
+            "toolSpec": {
+                "name": "get_soil_data",
+                "description": "Extract the specific soil pH and characteristics by providing exact GPS coordinates.",
+                "inputSchema": {
+                    "json": {
+                        "type": "object",
+                        "properties": {
+                            "latitude": {
+                                "type": "number",
+                                "description": "Latitude coordinate of the farm"
+                            },
+                            "longitude": {
+                                "type": "number",
+                                "description": "Longitude coordinate of the farm"
+                            }
+                        },
+                        "required": ["latitude", "longitude"]
+                    }
                 }
             }
         }
-    }]
+    ]
 }
 
 async def handle(payload: dict):
