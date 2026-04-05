@@ -97,16 +97,24 @@ async def handle(payload: dict):
         for block in output_message['content']:
             if 'toolUse' in block:
                 tool_use = block['toolUse']
+                
                 if tool_use['name'] == 'get_current_weather':
                     location = tool_use['input'].get('location_name')
-                    weather_data = get_current_weather(location)
+                    tool_data = get_current_weather(location)
+                
+                elif tool_use['name'] == 'get_soil_data':
+                    lat = tool_use['input'].get('latitude')
+                    lon = tool_use['input'].get('longitude')
+                    tool_data = get_soil_data(lat, lon)
+                else:
+                    tool_data = "Unknown tool requested."
                     
-                    tool_results.append({
-                        "toolResult": {
-                            "toolUseId": tool_use['toolUseId'],
-                            "content": [{"json": {"result": weather_data}}]
-                        }
-                    })
+                tool_results.append({
+                    "toolResult": {
+                        "toolUseId": tool_use['toolUseId'],
+                        "content": [{"json": {"result": tool_data}}]
+                    }
+                })
                     
         # Append tool results
         messages.append({"role": "user", "content": tool_results})
