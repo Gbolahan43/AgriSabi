@@ -1,7 +1,7 @@
 from fastapi import WebSocket
 from ...services.rag import context_prefetch
 from ...core.prompts import NOVA_SONIC_SYSTEM_PROMPT
-from ...services.nova_sonic import stream_conversation
+from ...services.nova_sonic import attach_websocket_to_nova
 
 async def handle_websocket(websocket: WebSocket, session_id: str, user_profile: dict = None):
     """
@@ -23,13 +23,8 @@ async def handle_websocket(websocket: WebSocket, session_id: str, user_profile: 
     try:
         # Mocking the actual streaming logic from services.nova_sonic
         await websocket.send_text("Nova Sonic Session Initialized")
-        stream_conversation(websocket, session_id, enriched_prompt)
+        await attach_websocket_to_nova(websocket, session_id, enriched_prompt)
         
-        while True:
-            # MVP: Echo placeholder for websocket functionality
-            data = await websocket.receive_text()
-            await websocket.send_text(f"Echo from Assistant: {data}")
-            
     except Exception as e:
         print(f"WebSocket Error: {e}")
     finally:

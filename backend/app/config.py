@@ -1,5 +1,5 @@
 import os
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     AWS_REGION: str = "af-south-1"
@@ -14,11 +14,10 @@ class Settings(BaseSettings):
 
     # DynamoDB Tables
     AWS_TABLE_PREFIX: str = "dev_"
-    DYNAMODB_SESSIONS_TABLE: str = f"{AWS_TABLE_PREFIX}agrisabi_sessions"
-    DYNAMODB_MARKET_TABLE: str = f"{AWS_TABLE_PREFIX}agrisabi_market_prices"
-    DYNAMODB_USERS_TABLE: str = f"{AWS_TABLE_PREFIX}agrisabi_users"
+    DYNAMODB_SESSIONS_TABLE: str = f"dev_agrisabi_sessions"
+    DYNAMODB_MARKET_TABLE: str = f"dev_agrisabi_market_prices"
+    DYNAMODB_USERS_TABLE: str = f"dev_agrisabi_users"
 
-    class Config:
-        env_file = ".env"
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 settings = Settings()

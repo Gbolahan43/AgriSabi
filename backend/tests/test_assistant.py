@@ -13,7 +13,7 @@ def mock_rag_prefetch():
 
 @pytest.fixture
 def mock_nova_sonic():
-    with patch("app.orchestration.agents.assistant_agent.stream_conversation") as mock:
+    with patch("app.orchestration.agents.assistant_agent.attach_websocket_to_nova") as mock:
         yield mock
 
 def test_assistant_websocket(mock_rag_prefetch, mock_nova_sonic):
@@ -29,26 +29,8 @@ def test_assistant_websocket(mock_rag_prefetch, mock_nova_sonic):
         # Ensure RAG was fetched before opening
         mock_rag_prefetch.assert_called_once()
         
-        # Ensure stream_conversation was invoked with the enriched prompt
+        # Ensure attach_websocket_to_nova was invoked with the enriched prompt
         mock_nova_sonic.assert_called_once()
         args, kwargs = mock_nova_sonic.call_args
         assert "Cassava requires well-drained soil." in args[2] 
         assert "You are AgriSabi" in args[2]
-        
-        # Test echo fallback
-        websocket.send_text("Hello AI")
-        response = websocket.receive_text()
-        assert response == "Echo from Assistant: Hello AI"
-
-def test_rag_context_prefetch_logic(mock_rag_prefetch):
-    # This tests `app.services.rag.context_prefetch` routing directly
-    # To mock `symptom_query` instead:
-    with patch("app.services.rag.symptom_query") as sum_q_mock:
-        sum_q_mock.return_value = "Mock Results"
-        
-        # Test registered profile
-        profile = {"primary_crops": ["rice", "maize"], "lga": "Sokoto"}
-        res = rag.context_prefetch(profile)
-        
-        sum_q_mock.assert_called_once_with("rice, maize Sokoto current month farming advice", top_k=10)
-        assert res == "Mock Results"

@@ -1,56 +1,47 @@
 import pytest
-from app.services.rag import symptom_query
+from app.services.rag import symptom_query, context_prefetch
+import app.services.rag as rag_module
 from unittest.mock import patch, MagicMock
 
 @pytest.fixture
-def mock_chromadb():
-    with patch("app.services.rag.get_db_client") as mock_db, \
-         patch("app.services.rag.get_embedding_model") as mock_model:
-        
-        # Setup mock document chunks returning from DB
-        mock_collection = MagicMock()
-        mock_collection.query.return_value = {
-            "documents": [
-                [
-                    "Document chunk 1 about Cassava Mosaic Disease",
-                    "Document chunk 2 detailing treatment",
-                    "Document chunk 3 precautions"
-                ]
+def mock_kb():
+    rag_module.KB_ID = "mock_kb_id_for_testing"
+    yield
+
+def test_rag_symptom_query_structuring(mock_kb):
+    with patch("app.services.rag.bedrock_agent_runtime") as mock_bedrock:
+        mock_bedrock.retrieve.return_value = {
+            "retrievalResults": [
+                {"content": {"text": "Document chunk 1 about Cassava Mosaic Disease"}},
+                {"content": {"text": "Document chunk 2 detailing treatment"}},
+                {"content": {"text": "Document chunk 3 precautions"}}
             ]
         }
         
-        db_instance = MagicMock()
-        db_instance.get_collection.return_value = mock_collection
-        mock_db.return_value = db_instance
+        result = symptom_query("yellow leaves on my cassava plant")
         
-        # Mock embedding model
-        model_instance = MagicMock()
-        model_instance.encode.return_value = [0.1, 0.2, 0.3]
-        mock_model.return_value = model_instance
-        
-        yield mock_collection
+        assert "Document chunk 1" in result
+        assert "---" in result
+        assert "Document chunk 2" in result
+        assert "Document chunk 3" in result
+        mock_bedrock.retrieve.assert_called_once()
 
-def test_rag_symptom_query_structuring(mock_chromadb):
-    result = symptom_query("yellow leaves on my cassava plant", top_k=3)
-    
-    # Needs to concatenate the documents using the '\n\n---\n\n' divider
-    assert "Document chunk 1" in result
-    assert "---" in result
-    assert "Document chunk 2" in result
-    assert "Document chunk 3" in result
-    
-    mock_chromadb.query.assert_called_once()
-    
-def test_rag_empty_results():
-    with patch("app.services.rag.get_db_client") as mock_db, \
-         patch("app.services.rag.get_embedding_model"):
+def test_rag_empty_results(mock_kb):
+    with patch("app.services.rag.bedrock_agent_runtime") as mock_bedrock:
+        mock_bedrock.retrieve.return_value = {"retrievalResults": []}
         
-        mock_collection = MagicMock()
-        mock_collection.query.return_value = {"documents": []}
+        result = symptom_query("unknown symptom")
+        assert result == "No relevant agricultural documents found matching these symptoms."
+
+def test_rag_context_prefetch(mock_kb):
+    with patch("app.services.rag.bedrock_agent_runtime") as mock_bedrock:
+        mock_bedrock.retrieve.return_value = {
+            "retrievalResults": [
+                {"content": {"text": "Context 1"}},
+                {"content": {"text": "Context 2"}}
+            ]
+        }
         
-        db_instance = MagicMock()
-        db_instance.get_collection.return_value = mock_collection
-        mock_db.return_value = db_instance
-        
-        result = symptom_query("unknown symptom", top_k=5)
-        assert result == "No relevant agricultural knowledge found."
+        result = context_prefetch("urban farming")
+        assert "Context 1\n\nContext 2" in result
+        mock_bedrock.retrieve.assert_called_once()

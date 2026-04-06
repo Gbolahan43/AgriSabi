@@ -16,8 +16,6 @@ async def attach_websocket_to_nova(websocket: WebSocket, session_id: str, system
     Client Input: PCM 16-bit 16kHz Mono
     Client Output: PCM 16-bit 24kHz Mono (Nova Sonic output)
     """
-    await websocket.accept()
-    
     try:
         # In a complete implementation, we yield the audio chunks into the botocore 
         # EventStream and route the output chunks back to the WebSocket.
