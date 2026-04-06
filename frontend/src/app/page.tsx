@@ -1,6 +1,6 @@
 "use client"
 import Link from 'next/link'
-import { ArrowRight, Leaf, Mic, LineChart, FlaskConical, Target } from 'lucide-react'
+import { ArrowRight, Leaf, Mic, LineChart, FlaskConical, Target, ThermometerSun } from 'lucide-react'
 
 export default function LandingPage() {
   return (
@@ -77,7 +77,7 @@ export default function LandingPage() {
               </div>
               <h3 className="font-outfit text-xl font-bold text-on_surface">Live Voice Assistant</h3>
               <p className="text-gray-400 text-sm leading-relaxed">Natural language interactions in your language. Get expert clinical advice while you're physically working in the field.</p>
-              <Link href="/diagnose" className="inline-flex text-secondary text-sm font-semibold mt-4 hover:underline">
+              <Link href="/assistant" className="inline-flex text-secondary text-sm font-semibold mt-4 hover:underline">
                 Try Voice Assist {'>'}
               </Link>
             </div>
@@ -87,10 +87,10 @@ export default function LandingPage() {
           <div className="bg-surface-container-low rounded-3xl p-8 border border-surface-container-high hover:border-primary/50 transition-colors">
             <div className="space-y-4">
               <div className="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary">
-                <LineChart className="w-6 h-6" />
+                <ThermometerSun className="w-6 h-6" />
               </div>
-              <h3 className="font-outfit text-xl font-bold text-on_surface">Market Intelligence</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">Real-time pricing spanning local and regional markets to ensure you get the best value for your hard work.</p>
+              <h3 className="font-outfit text-xl font-bold text-on_surface">Geospatial Agronomy</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">Integrated with native OpenWeather forecasts and the iSDAsoil API to provide hyper-localized soil pH and climate warnings.</p>
             </div>
           </div>
 
@@ -102,7 +102,7 @@ export default function LandingPage() {
                 <FlaskConical className="w-6 h-6" />
               </div>
               <h3 className="font-outfit text-xl font-bold text-on_surface">The Research Bridge</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">Access curated scientific findings from top agricultural universities globally, translated into simple local techniques.</p>
+              <p className="text-gray-400 text-sm leading-relaxed">Powered by an automated AWS Knowledge Base actively scraping NAERLS alerts and PlantVillage encyclopedias to provide you with verified scientific cures.</p>
             </div>
           </div>
 
