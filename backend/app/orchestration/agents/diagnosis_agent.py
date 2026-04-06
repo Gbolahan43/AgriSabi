@@ -41,14 +41,14 @@ Raw Symptoms:
 {raw_symptoms}
 
 Respond strictly in the following JSON schema:
-{
+{{
     "disease": "string",
     "confidence": 0,
     "scientific_name": "string",
     "symptoms": ["string"],
     "organic_treatments": ["string"],
     "chemical_treatments": ["string"]
-}
+}}
 """
 
 async def handle(file: UploadFile) -> dict:
