@@ -28,8 +28,8 @@ export default function LandingPage() {
             Start Diagnosing Now
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
-          <Link href="/dashboard" className="px-8 py-4 rounded-3xl border border-surface-container text-on_surface font-semibold hover:bg-surface-container transition-all text-sm tracking-wide">
-            View Market Insights
+          <Link href="/chat" className="px-8 py-4 rounded-3xl border border-surface-container text-on_surface font-semibold hover:bg-surface-container transition-all text-sm tracking-wide">
+            Open Chat Assistant
           </Link>
         </div>
       </section>
@@ -114,7 +114,7 @@ export default function LandingPage() {
         <div className="w-full bg-primary-glow rounded-[3rem] p-12 text-center shadow-ambient-glow-high flex flex-col items-center">
             <h2 className="font-outfit text-3xl md:text-5xl font-bold text-surface mb-6">Ready to Optimize Your Harvest?</h2>
             <p className="text-surface/80 max-w-xl mx-auto mb-10 font-medium">Join 15,000+ African farmers using AgriSabi to build a more resilient and profitable agricultural future.</p>
-            <Link href="/dashboard" className="px-8 py-4 rounded-3xl bg-surface text-primary font-bold hover:scale-105 transition-transform duration-300">
+            <Link href="/chat" className="px-8 py-4 rounded-3xl bg-surface text-primary font-bold hover:scale-105 transition-transform duration-300">
                Get Started for Free
             </Link>
             <p className="mt-6 text-xs text-surface/60 font-semibold tracking-wider">AVAILABLE ON WEB & MOBILE</p>

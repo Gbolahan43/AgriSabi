@@ -25,3 +25,23 @@ export async function uploadForDiagnosis(file: File): Promise<DiagnosisResponse>
 
   return response.json();
 }
+
+export interface ChatResponse {
+  message: string;
+}
+
+export async function sendChatMessage(message: string, sessionId: string = "default_session"): Promise<ChatResponse> {
+  const response = await fetch(`${API_BASE_URL}/chat`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ message, session_id: sessionId }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to send message.");
+  }
+
+  return response.json();
+}
