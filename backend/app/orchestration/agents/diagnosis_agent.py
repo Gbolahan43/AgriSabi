@@ -5,7 +5,9 @@ from fastapi import UploadFile
 from ...services.rag import symptom_query
 
 SONNET_MODEL = os.getenv("PRIMARY_MODEL_ID", "anthropic.claude-3-5-sonnet-20240620-v1:0")
-bedrock_client = boto3.client('bedrock-runtime', region_name=os.getenv("AWS_REGION", "us-east-1"))
+
+def get_bedrock_client():
+    return boto3.client('bedrock-runtime', region_name=os.getenv("AWS_REGION", "us-east-1"))
 
 SYMPTOM_EXTRACTION_PROMPT = """
 You are an expert crop pathologist. You are looking at a photo taken by a farmer.
@@ -69,7 +71,7 @@ async def handle(file: UploadFile) -> dict:
     ]
     
     try:
-        response = bedrock_client.converse(
+        response = get_bedrock_client().converse(
             modelId=SONNET_MODEL,
             messages=messages,
             inferenceConfig={"maxTokens": 500, "temperature": 0.1}
@@ -97,13 +99,13 @@ async def handle(file: UploadFile) -> dict:
             raw_symptoms=symptom_string
         )
         
-        response2 = bedrock_client.converse(
+        response2 = get_bedrock_client().converse(
             modelId=SONNET_MODEL,
             messages=[{"role": "user", "content": [{"text": synthesis_prompt}]}],
             inferenceConfig={"maxTokens": 1000, "temperature": 0.2}
         )
         
-        final_diagnosis_str = response2['output']['message']['content'][0]['text']
+        final_diagnosis_str = response2['output']['message']['content'][0]['text'].strip()
         return json.loads(final_diagnosis_str)
         
     except Exception as e:

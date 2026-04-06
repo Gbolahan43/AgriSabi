@@ -24,6 +24,8 @@ async def diagnose_endpoint(file: UploadFile = File(...)):
             
         return result
         
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Diagnose Route Error: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error during diagnosis")

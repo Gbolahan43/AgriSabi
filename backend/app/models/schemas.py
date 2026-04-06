@@ -11,24 +11,15 @@ class ChatResponse(BaseModel):
 class VoiceResponse(BaseModel):
     audio_url: str = Field(..., description="URL to the generated speech audio")
     transcript: str = Field(..., description="Text transcript of the response")
-
-class DiseaseInfo(BaseModel):
-    name: str
-    likelihood: str
-    source: str
-    treatment_organic: List[str]
-    treatment_chemical: List[str]
-    dosage: Optional[str] = None
-    precautions: List[str]
+    response: str = Field(..., description="AI text response")
 
 class DiagnosisResponse(BaseModel):
-    symptoms_observed: List[str]
-    image_quality: str
-    possible_diseases: List[DiseaseInfo]
-    confidence_level: str
-    expert_referral_recommended: bool
-    transparency_label: str
-    retake_guidance: Optional[str] = None
+    disease: str
+    confidence: int
+    scientific_name: Optional[str] = None
+    symptoms: List[str]
+    organic_treatments: List[str]
+    chemical_treatments: List[str]
 
 class MarketPrice(BaseModel):
     price_per_kg: float

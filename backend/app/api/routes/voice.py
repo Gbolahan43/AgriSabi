@@ -25,6 +25,8 @@ async def voice_endpoint(file: UploadFile = File(...)):
             
         return result
         
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Voice route error: {e}")
         raise HTTPException(status_code=500, detail="Failed to synthesize voice")
