@@ -1,12 +1,10 @@
-fastapi
-uvicorn[standard]
-boto3
-pydantic
-pydantic-settings
-python-dotenv
-requests
-python-multipart
-pytest
-pytest-asyncio
-httpx
-anyio
+# Production dependencies only — exact versions that passed all tests
+fastapi==0.128.0
+uvicorn[standard]==0.40.0
+boto3==1.42.30
+pydantic==2.12.5
+pydantic-settings==2.12.0
+python-dotenv==1.2.1
+requests==2.32.5
+python-multipart==0.0.21
+anyio==4.12.1
