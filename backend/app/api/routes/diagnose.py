@@ -10,7 +10,7 @@ async def diagnose_endpoint(file: UploadFile = File(...)):
     Two-Stage Diagnosis API
     Takes an image upload, passes it through the orchestration layer where
     Stage 1 extracts symptoms using Claude 3.5 Sonnet Vision and Stage 2 matches 
-    them against the ChromaDB/KB.
+    them against the Bedrock Knowledge Base (OpenSearch Serverless).
     """
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File uploaded was not an image.")
