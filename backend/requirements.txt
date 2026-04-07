@@ -1,13 +1,12 @@
 fastapi
-uvicorn
+uvicorn[standard]
 boto3
 pydantic
 pydantic-settings
 python-dotenv
-Requests
-chromadb
-sentence-transformers
+requests
 python-multipart
 pytest
 pytest-asyncio
 httpx
+anyio

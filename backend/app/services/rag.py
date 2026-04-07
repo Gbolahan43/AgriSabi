@@ -1,8 +1,9 @@
 import os
 import boto3
+from app.config import settings
 
-bedrock_agent_runtime = boto3.client('bedrock-agent-runtime', region_name=os.getenv("AWS_REGION", "us-east-1"))
-KB_ID = os.getenv("KNOWLEDGE_BASE_ID")
+bedrock_agent_runtime = boto3.client('bedrock-agent-runtime', region_name=os.getenv("AWS_REGION", "us-west-2"))
+KB_ID = settings.BEDROCK_KB_ID
 
 def symptom_query(symptoms: str) -> str:
     """

@@ -27,10 +27,10 @@ export async function uploadForDiagnosis(file: File): Promise<DiagnosisResponse>
 }
 
 export interface ChatResponse {
-  message: string;
+  response: string; // Backend ChatResponse schema field
 }
 
-export async function sendChatMessage(message: string, sessionId: string = "default_session"): Promise<ChatResponse> {
+export async function sendChatMessage(message: string, sessionId: string = "default_session"): Promise<{ message: string }> {
   const response = await fetch(`${API_BASE_URL}/chat`, {
     method: "POST",
     headers: {
@@ -40,8 +40,11 @@ export async function sendChatMessage(message: string, sessionId: string = "defa
   });
 
   if (!response.ok) {
-    throw new Error("Failed to send message.");
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to send message.");
   }
 
-  return response.json();
+  const data: ChatResponse = await response.json();
+  // Normalize backend 'response' field → frontend 'message' field
+  return { message: data.response };
 }

@@ -1,40 +1,39 @@
-# Byte-compiled / optimized / DLL files
+# ─── Python ───────────────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
 *$py.class
+*.egg-info/
+dist/
+build/
 
-# Pytest
+# ─── Testing ──────────────────────────────────────────────────────────────────
 .pytest_cache/
+.coverage
+htmlcov/
 
-# Virtual environments
+# ─── Virtual Environments ─────────────────────────────────────────────────────
 venv/
 env/
 ENV/
-env.bak/
-venv.bak/
-frontend/node_modules/
 backend/venv/
-data_ingestion/venv/
 
-# Environment variables
+# ─── Environment Variables ────────────────────────────────────────────────────
 .env
+.env.local
+.env.production.local
+backend/.env
 
-# ChromaDB local storage
-chroma_db/
-data_ingestion/chroma_db/
-backend/chroma_db/
-
-# IDEs and Editors
+# ─── IDEs & Editors ───────────────────────────────────────────────────────────
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# OS specific
+# ─── OS Files ─────────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 
-# Frontend (Next.js & Node)
+# ─── Frontend (Next.js & Node) ────────────────────────────────────────────────
 frontend/node_modules/
 frontend/.next/
 frontend/out/
@@ -48,5 +47,6 @@ frontend/.env.development.local
 frontend/.env.test.local
 frontend/.env.production.local
 
-# Raw Data (PDFs, Source Materials)
+# ─── Raw Data & Legacy ────────────────────────────────────────────────────────
 docs/raw_data/
+chroma_db/

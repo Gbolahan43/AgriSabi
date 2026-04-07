@@ -13,10 +13,15 @@ class Settings(BaseSettings):
     NOVA_SONIC_MODEL_ID: str = "amazon.nova-sonic-v1:0"
 
     # DynamoDB Tables
-    AWS_TABLE_PREFIX: str = "dev_"
-    DYNAMODB_SESSIONS_TABLE: str = f"dev_agrisabi_sessions"
-    DYNAMODB_MARKET_TABLE: str = f"dev_agrisabi_market_prices"
-    DYNAMODB_USERS_TABLE: str = f"dev_agrisabi_users"
+    AWS_TABLE_PREFIX: str = "prod_"
+    DYNAMODB_SESSIONS_TABLE: str = "prod_agrisabi_sessions"
+    DYNAMODB_MARKET_TABLE: str = "prod_agrisabi_market_prices"
+    DYNAMODB_USERS_TABLE: str = "prod_agrisabi_users"
+
+    @property
+    def KNOWLEDGE_BASE_ID(self) -> str:
+        """Alias for BEDROCK_KB_ID for compatibility with rag.py"""
+        return self.BEDROCK_KB_ID
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
