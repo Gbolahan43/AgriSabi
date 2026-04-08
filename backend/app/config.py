@@ -8,8 +8,8 @@ class Settings(BaseSettings):
 
     # Bedrock configuration
     BEDROCK_KB_ID: str = ""
-    PRIMARY_MODEL_ID: str = "anthropic.claude-sonnet-4-5-20250929-v1:0"
-    FALLBACK_MODEL_ID: str = "anthropic.claude-opus-4-6-v1:0"
+    PRIMARY_MODEL_ID: str = "anthropic.claude-3-sonnet-20240229-v1:0"
+    FALLBACK_MODEL_ID: str = "anthropic.claude-3-sonnet-20240229-v1:0"
     NOVA_SONIC_MODEL_ID: str = "amazon.nova-sonic-v1:0"
 
     # DynamoDB Tables
