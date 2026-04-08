@@ -50,3 +50,5 @@ frontend/.env.production.local
 # ─── Raw Data & Legacy ────────────────────────────────────────────────────────
 docs/raw_data/
 chroma_db/
+
+infra/
