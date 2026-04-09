@@ -13,7 +13,7 @@ export async function uploadForDiagnosis(file: File): Promise<DiagnosisResponse>
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${API_BASE_URL}/diagnose`, {
+  const response = await fetch(`${API_BASE_URL}/diagnose/`, {
     method: "POST",
     body: formData,
   });
@@ -31,7 +31,7 @@ export interface ChatResponse {
 }
 
 export async function sendChatMessage(message: string, sessionId: string = "default_session"): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE_URL}/chat`, {
+  const response = await fetch(`${API_BASE_URL}/chat/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
