@@ -6,9 +6,10 @@ from fastapi import WebSocket
 # Note: Bidirectional streaming typically requires the async botocore event stream protocol
 # AWS exposes this via retrieve_and_generate_stream or invoke_model_with_bidirectional_stream
 # This service acts as the bridge translating FastAPI WebSockets to Bedrock's Audio format.
+from app.config import settings
 
 bedrock_client = boto3.client('bedrock-runtime', region_name=os.getenv("AWS_REGION", "us-east-1"))
-NOVA_SONIC_MODEL_ID = "amazon.nova-sonic-v1:0"
+NOVA_SONIC_MODEL_ID = settings.NOVA_SONIC_MODEL_ID
 
 async def attach_websocket_to_nova(websocket: WebSocket, session_id: str, system_prompt: str):
     """

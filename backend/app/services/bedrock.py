@@ -10,10 +10,12 @@ def get_bedrock_client():
         client = boto3.client('bedrock-runtime', region_name=settings.AWS_REGION)
     return client
 
-async def invoke_converse(messages: list, system_prompt: str, model_id: str = "anthropic.claude-3-5-sonnet-20240620-v1:0"):
+async def invoke_converse(messages: list, system_prompt: str, model_id: str = None):
     """
     Wrapper for Amazon Bedrock Converse API supporting text and vision inputs.
     """
+    if model_id is None:
+        model_id = settings.PRIMARY_MODEL_ID
     bedrock = get_bedrock_client()
     
     try:

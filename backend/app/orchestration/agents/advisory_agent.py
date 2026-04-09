@@ -10,7 +10,7 @@ from app.services.weather import get_current_weather
 from app.services.soil import get_soil_data
 
 bedrock_client = boto3.client('bedrock-runtime', region_name=os.getenv("AWS_REGION", "us-east-1"))
-MODEL_ID = os.getenv("FALLBACK_MODEL_ID", "anthropic.claude-3-5-sonnet-20240620-v1:0")
+MODEL_ID = settings.FALLBACK_MODEL_ID
 
 TOOL_CONFIG = {
     "tools": [

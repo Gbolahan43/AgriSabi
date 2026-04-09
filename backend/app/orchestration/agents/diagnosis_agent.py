@@ -2,9 +2,10 @@ import os
 import json
 import boto3
 from fastapi import UploadFile
+from app.config import settings
 from ...services.rag import symptom_query
 
-SONNET_MODEL = os.getenv("PRIMARY_MODEL_ID", "anthropic.claude-3-5-sonnet-20240620-v1:0")
+SONNET_MODEL = settings.PRIMARY_MODEL_ID
 
 def get_bedrock_client():
     return boto3.client('bedrock-runtime', region_name=os.getenv("AWS_REGION", "us-east-1"))
