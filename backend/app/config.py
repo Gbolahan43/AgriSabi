@@ -8,9 +8,9 @@ class Settings(BaseSettings):
 
     # Bedrock configuration
     BEDROCK_KB_ID: str = ""
-    PRIMARY_MODEL_ID: str = "anthropic.claude-3-7-sonnet-20250219-v1:0"
-    FALLBACK_MODEL_ID: str = "anthropic.claude-3-7-sonnet-20250219-v1:0"
-    NOVA_SONIC_MODEL_ID: str = "amazon.nova-sonic-v1:0"
+    PRIMARY_MODEL_ID: str = "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
+    FALLBACK_MODEL_ID: str = "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
+    NOVA_SONIC_MODEL_ID: str = "us.amazon.nova-sonic-v1:0"
 
     # DynamoDB Tables
     AWS_TABLE_PREFIX: str = "prod_"
