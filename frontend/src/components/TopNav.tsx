@@ -4,18 +4,20 @@ import { Cloud, User } from 'lucide-react'
 
 export default function TopNav() {
   return (
-    <nav className="w-full h-20 flex items-center justify-between px-8 md:px-16 container mx-auto z-50 pt-4">
-      <Link href="/" className="text-primary font-outfit text-2xl font-bold tracking-tight">
-        AgriSabi
-      </Link>
-      
-      <div className="hidden md:flex gap-8 items-center text-sm font-medium text-gray-300">
-        <Link href="/dashboard" className="text-primary tracking-wide">HOME</Link>
-        <Link href="#" className="hover:text-primary transition-colors tracking-wide">MARKET</Link>
-        <Link href="/diagnose" className="hover:text-primary transition-colors tracking-wide">ASSISTANT</Link>
+    <nav className="w-full h-20 flex items-center justify-between px-8 md:px-16 container mx-auto z-50 pt-4 relative">
+      <div className="flex-1">
+        <Link href="/" className="text-primary font-outfit text-2xl font-bold tracking-tight">
+          AgriSabi
+        </Link>
       </div>
-
-      <div className="flex items-center gap-4 text-surface-variant">
+      
+      <div className="hidden md:flex flex-1 justify-center gap-8 items-center text-sm font-medium text-gray-300">
+        <Link href="/" className="hover:text-primary transition-colors tracking-wide">Home</Link>
+        <Link href="/dashboard" className="hover:text-primary transition-colors tracking-wide">Dashboard</Link>
+        <Link href="/chat" className="hover:text-primary transition-colors tracking-wide">Assistant</Link>
+      </div>
+      
+      <div className="flex-1 flex items-center justify-end gap-4 text-surface-variant">
         <button className="p-2 bg-surface-container-low rounded-full hover:bg-surface-container transition-all">
           <Cloud className="w-5 h-5 text-gray-300" />
         </button>
