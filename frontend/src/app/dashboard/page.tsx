@@ -1,4 +1,5 @@
 "use client"
+import Link from 'next/link'
 import { Sun, Leaf, ArrowRight, TrendingUp, Mic, Camera } from 'lucide-react'
 
 export default function Dashboard() {
