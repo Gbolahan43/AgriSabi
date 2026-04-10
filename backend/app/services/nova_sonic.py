@@ -1,45 +1,93 @@
-import os
+# Full Nova Sonic Bidirectional Implementation
+import asyncio
+import base64
 import json
-import boto3
+from typing import AsyncGenerator
 from fastapi import WebSocket
-
-# Note: Bidirectional streaming typically requires the async botocore event stream protocol
-# AWS exposes this via retrieve_and_generate_stream or invoke_model_with_bidirectional_stream
-# This service acts as the bridge translating FastAPI WebSockets to Bedrock's Audio format.
+from botocore.exceptions import ClientError
 from app.config import settings
+import boto3
 
-bedrock_client = boto3.client('bedrock-runtime', region_name=os.getenv("AWS_REGION", "us-east-1"))
+bedrock_runtime = boto3.client('bedrock-runtime', region_name=settings.AWS_REGION)
 NOVA_SONIC_MODEL_ID = settings.NOVA_SONIC_MODEL_ID
 
 async def attach_websocket_to_nova(websocket: WebSocket, session_id: str, system_prompt: str):
-    """
-    Tier 1 Voice & Live Assistant: Bridges a client WebSocket to Amazon Nova Sonic.
-    Client Input: PCM 16-bit 16kHz Mono
-    Client Output: PCM 16-bit 24kHz Mono (Nova Sonic output)
-    """
+    """Real-time bidirectional Nova Sonic voice agent.
+    Input: 16kHz PCM mono from mic
+    Output: 24kHz PCM mono + text events
+    Specs: Base64 audio chunks, barge-in enabled."""
+    
     try:
-        # In a complete implementation, we yield the audio chunks into the botocore 
-        # EventStream and route the output chunks back to the WebSocket.
-        # This handles the native "barge-in" capabilities automatically.
+        await websocket.accept()
         
-        while True:
-            # Receive audio chunk from client
-            client_audio_chunk = await websocket.receive_bytes()
+        # 1. Initialize Nova Sonic Session (EventStream)
+        stream = await bedrock_runtime.invoke_model_with_bidirectional_stream(
+            modelId=NOVA_SONIC_MODEL_ID,
+            body={
+                'sessionStart': {
+                    'inferenceConfiguration': {
+                        'maxTokens': 1024,
+                        'topP': 0.9,
+                        'temperature': 0.7
+                    },
+                    'turnDetectionConfiguration': {
+                        'endpointingSensitivity': 'HIGH'  # Barge-in
+                    }
+                }
+            }
+        )
+        
+        # 2. Send System Prompt
+        await send_event(stream, {
+            'promptStart': {'promptName': 'agrisabi'},
+            'contentStart': {'type': 'TEXT', 'role': 'SYSTEM'},
+            'textInput': {'content': system_prompt},
+            'contentEnd': {}
+        })
+        
+        # 3. Bidirectional Loop
+        async for chunk in stream:
+            event = json.loads(chunk)
             
-            # TODO: Route `client_audio_chunk` into Bedrock Event Stream
+            # Output: Audio chunks to WS
+            if 'audioOutputChunk' in event:
+                audio_b64 = event['audioOutputChunk']['data']
+                audio_bytes = base64.b64decode(audio_b64)
+                await websocket.send_bytes(audio_bytes)
             
-            # Simulate processing delay
-            # await asyncio.sleep(0.1)
+            # Text events (subtitles)
+            if 'textOutputChunk' in event:
+                await websocket.send_text(event['textOutputChunk']['content'])
             
-            # TODO: Read from Bedrock Event Stream and send back
-            # bedrock_audio_chunk = stream.read()
-            # await websocket.send_bytes(bedrock_audio_chunk)
-            
-            # For MVP stub, we echo back nothing to keep the connection alive
-            pass
-
+            # Receive input from WS
+            try:
+                input_audio = await asyncio.wait_for(websocket.receive_bytes(), timeout=1.0)
+                await send_audio_input(stream, input_audio)
+            except asyncio.TimeoutError:
+                pass  # No input, continue listening
+                
+    except ClientError as e:
+        print(f"Nova Sonic Error [{session_id}]: {e}")
+        await websocket.send_text("❌ Voice connection failed")
     except Exception as e:
-        print(f"Nova Sonic WebSocket Error [{session_id}]: {e}")
+        print(f"WS Error [{session_id}]: {e}")
     finally:
         await websocket.close()
-        # Save transcript payload to dynamo if available from the stream metadata
+
+async def send_event(stream, event_data: dict):
+    """Send JSON event to Nova Sonic stream."""
+    event_json = json.dumps({'event': event_data})
+    stream.send_event(event_json.encode())
+
+async def send_audio_input(stream, audio_bytes: bytes):
+    """Send 16kHz PCM audio chunk."""
+    b64_audio = base64.b64encode(audio_bytes).decode()
+    audio_event = {
+        'audioInputChunk': {
+            'data': b64_audio,
+            'sampleRateHertz': 16000,
+            'sampleSizeBits': 16,
+            'channelCount': 1
+        }
+    }
+    await send_event(stream, audio_event)

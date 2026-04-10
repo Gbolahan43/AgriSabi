@@ -1,21 +1,43 @@
 import boto3
+import io
+import base64
+import uuid
+import requests
+import asyncio
+from app.config import settings
 
-def get_transcribe_client():
-    return boto3.client('transcribe')
+transcribe = boto3.client('transcribe', region_name=settings.AWS_REGION)
 
-def identify_language(audio_bytes: bytes) -> tuple[str, float]:
-    """
-    Analyze the first 2 seconds of audio to detect the language.
-    Returns the language code (en, pcm, ha, yo, ig) and confidence score.
-    Note: For MVP, returning a mock based on expected logic.
-    """
-    # Mock detection: Assumes English/Pidgin > 0.8 confidence by default
-    # Real implementation would call Transcribe Streaming IdentifyLanguage
-    return "en", 0.95
-
-def full_transcription(audio_bytes: bytes, language_code: str) -> str:
-    """
-    Transcribe the full audio block using Transcribe.
-    """
-    # Mock text
-    return "This is a transcribed sentence of the farmer's query."
+async def transcribe_audio(audio_bytes: bytes, language: str = "en-US") -> str:
+    """Real-time audio → text using Amazon Transcribe"""
+    # Save temp to S3 (Transcribe requirement)
+    s3 = boto3.client('s3')
+    bucket = settings.S3_BUCKET
+    key = f"transcribe/{uuid.uuid4()}.wav"
+    s3.put_object(Bucket=bucket, Key=key, Body=audio_bytes)
+    
+    job_name = f"agrisabi-{uuid.uuid4()}"
+    
+    # Simplified: Use batch for MVP
+    transcribe.start_transcription_job(
+        TranscriptionJobName=job_name,
+        Media={'MediaFileUri': f's3://{bucket}/{key}'},
+        MediaSampleRateHertz=16000,
+        LanguageCode=language,
+        OutputBucketName=bucket
+    )
+    
+    # Poll for completion (async in prod)
+    while True:
+        status = transcribe.get_transcription_job(TranscriptionJobName=job_name)
+        if status['TranscriptionJob']['TranscriptionJobStatus'] in ['COMPLETED', 'FAILED']:
+            break
+        await asyncio.sleep(1)
+    
+    if status['TranscriptionJob']['TranscriptionJobStatus'] == 'COMPLETED':
+        transcript_uri = status['TranscriptionJob']['Transcript']['TranscriptFileUri']
+        # Fetch and parse JSON transcript
+        response = requests.get(transcript_uri)
+        return response.json()['results']['transcripts'][0]['transcript']
+    
+    return ""

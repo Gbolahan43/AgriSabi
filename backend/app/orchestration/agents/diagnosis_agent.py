@@ -1,14 +1,18 @@
 import os
 import json
+import base64
+import io
 import boto3
+from PIL import Image
 from fastapi import UploadFile
 from app.config import settings
 from ...services.rag import symptom_query
+from app.services.vision import encode_image, get_image_media_type
 
 SONNET_MODEL = settings.PRIMARY_MODEL_ID
 
 def get_bedrock_client():
-    return boto3.client('bedrock-runtime', region_name=os.getenv("AWS_REGION", "us-east-1"))
+    return boto3.client('bedrock-runtime', region_name=os.getenv("AWS_REGION", "us-west-2"))
 
 SYMPTOM_EXTRACTION_PROMPT = """
 You are an expert crop pathologist. You are looking at a photo taken by a farmer.
@@ -53,18 +57,29 @@ Respond strictly in the following JSON schema:
 """
 
 async def handle(file: UploadFile) -> dict:
-    image_bytes = await file.read()
+    image_bytes = await encode_image(file)  
+    media_type = get_image_media_type(file.filename)  
     
-    # STAGE 1: Symptom Extraction (Vision)
+    image = Image.open(io.BytesIO(image_bytes))
+    image = image.resize((1024, 1024), Image.Resampling.LANCZOS)  
+    buffered = io.BytesIO()
+    image.save(buffered, format="JPEG", quality=85)  
+    img_b64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+    
     messages = [
         {
             "role": "user",
             "content": [
-                {"text": SYMPTOM_EXTRACTION_PROMPT},
                 {
-                    "image": {
-                        "format": "png",  # Adjust if extending to jpeg dynamically
-                        "source": {"bytes": image_bytes}
+                    "type": "text", 
+                    "text": SYMPTOM_EXTRACTION_PROMPT
+                },
+                {
+                    "type": "image",  # REQUIRED: "image" not just dict
+                    "source": {        # REQUIRED: "source" wrapper
+                        "type": "base64",
+                        "media_type": media_type,  # Dynamic from your util!
+                        "data": img_b64
                     }
                 }
             ]
@@ -81,20 +96,18 @@ async def handle(file: UploadFile) -> dict:
         extraction = json.loads(stage1_output)
         
         if extraction.get("image_quality") == "poor":
-            return {"error": "Image is too blurry or obscured to accurately extract symptoms. Please retake the photo."}
-            
+            return {"error": "Image is too blurry..."}
+        
         symptom_string = ", ".join(extraction.get("symptoms", []))
         
-    except Exception as e:
+    except Exception as e:  # KEEP
         print(f"Stage 1 Error: {e}")
         return {"error": "Failed to analyze image visually."}
+    
+    try: 
         
-    # STAGE 2: RAG Resolution
-    try:
-        # 1. Fetch relevant IITA/NCRI documents based on exact symptoms
         kb_context = symptom_query(symptom_string)
-        
-        # 2. Synthesize treatment
+
         synthesis_prompt = TREATMENT_SYNTHESIS_PROMPT.format(
             kb_context=kb_context,
             raw_symptoms=symptom_string

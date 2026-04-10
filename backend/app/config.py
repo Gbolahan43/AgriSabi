@@ -2,7 +2,7 @@ import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    AWS_REGION: str = "af-south-1"
+    AWS_REGION: str = "us-west-2"
     LOG_LEVEL: str = "INFO"
     CORS_ALLOWED_ORIGINS: str = "*"
 
@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     PRIMARY_MODEL_ID: str = "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
     FALLBACK_MODEL_ID: str = "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
     NOVA_SONIC_MODEL_ID: str = "us.amazon.nova-sonic-v1:0"
+    S3_BUCKET: str = "agrisabi-voice-storage"
 
     # DynamoDB Tables
     AWS_TABLE_PREFIX: str = "prod_"

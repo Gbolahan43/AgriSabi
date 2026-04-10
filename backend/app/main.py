@@ -24,7 +24,7 @@ app.include_router(voice.router, prefix="/voice", tags=["voice"])
 app.include_router(diagnose.router, prefix="/diagnose", tags=["diagnose"])
 app.include_router(weather.router, prefix="/weather", tags=["weather"])
 app.include_router(market.router, prefix="/market", tags=["market"])
-app.include_router(history.router, prefix="/history", tags=["history"])
+app.include_router(history.router, prefix="/api", tags=["history"])
 app.include_router(assistant.router, prefix="/assistant", tags=["assistant"])
 
 @app.get("/")

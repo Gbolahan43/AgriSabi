@@ -1,22 +1,16 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
+import uuid
 from ...orchestration.agents import assistant_agent
 
-router = APIRouter()
+router = APIRouter(prefix="/assistant")  
 
 @router.websocket("/stream")
-async def assistant_stream(websocket: WebSocket, session_id: str = "anon"):
-    """
-    WebSocket endpoint for the Live Nova Sonic Assistant
-    User Profile can be passed in securely via dependencies in Phase 3.
-    """
-    # Dummy user profile for MVP logic testing
-    dummy_profile = {
-        "primary_crops": ["cassava", "yam"],
-        "lga": "Lagos"
-    }
+async def assistant_stream(websocket: WebSocket, session_id: str = Query("anon")):
+    """Full Voice-to-Voice Nova Sonic WebSocket"""
+    session_id = session_id or str(uuid.uuid4())
+    dummy_profile = {"primary_crops": ["cassava", "yam"], "lga": "Lagos"}
     
-    await assistant_agent.handle_websocket(
-        websocket=websocket,
-        session_id=session_id,
-        user_profile=dummy_profile
-    )
+    try:
+        await assistant_agent.handle_websocket(websocket, session_id, dummy_profile)
+    except WebSocketDisconnect:
+        print(f"Session {session_id} disconnected")

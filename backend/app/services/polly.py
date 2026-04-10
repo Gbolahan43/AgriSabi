@@ -10,16 +10,13 @@ def get_polly_client():
     return client
 
 def synthesize_speech(text: str, language_code: str = 'en-US') -> bytes:
-    """
-    Synthesize speech from text using Amazon Polly Neural voices.
-    """
-    # Mapping our internal language codes to Polly languages
+    
     voice_map = {
-        'ha': 'Amina',     # Mock or real if supported
-        'yo': 'Ayanda',    # South African voice as placeholder if no Yor is available natively
-        'ig': 'Ayanda',
-        'en': 'Joanna',
-        'pcm': 'Kemi'      # Nigerian English/Pidgin
+        'ha': 'Amina',      # Hausa (closest neural)
+        'yo': 'Ayanda',     # Yoruba (South African fallback)
+        'ig': 'Ayanda',     # Igbo fallback
+        'en': 'Joanna',     # Standard
+        'pcm': 'Kemi'       # Nigerian English/Pidgin
     }
     
     voice_id = voice_map.get(language_code, 'Joanna')
@@ -28,14 +25,11 @@ def synthesize_speech(text: str, language_code: str = 'en-US') -> bytes:
         polly = get_polly_client()
         response = polly.synthesize_speech(
             Text=text,
-            OutputFormat='mp3',
+            OutputFormat='mp3',  # ✅ Frontend-ready
             VoiceId=voice_id,
             Engine='neural'
         )
-        
-        if "AudioStream" in response:
-            return response["AudioStream"].read()
-        return None
+        return response["AudioStream"].read()
     except Exception as e:
         print(f"Polly Synthesis Error: {e}")
         return None
