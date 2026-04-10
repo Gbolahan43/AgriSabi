@@ -57,9 +57,9 @@ export default function Dashboard() {
                 <div className="text-4xl font-extrabold text-primary mb-1">94%</div>
                 <div className="text-[10px] font-bold tracking-widest text-gray-500 uppercase">Vitality Score</div>
               </div>
-              <button className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center hover:bg-surface-variant transition-colors">
+              <Link href="/chat" className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center hover:bg-surface-variant transition-colors">
                  <ArrowRight className="w-4 h-4 text-gray-300" />
-              </button>
+              </Link>
             </div>
         </div>
 
@@ -124,14 +124,16 @@ export default function Dashboard() {
         {/* Assistant Block */}
         <div className="md:col-span-1 bg-surface-container-low rounded-[2rem] p-8 border border-surface-container-high relative overflow-hidden flex flex-col items-center justify-center text-center group">
              <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors pointer-events-none" />
-             <div className="w-16 h-16 rounded-3xl bg-surface-container flex items-center justify-center mb-4 shadow-inner">
-                 <Mic className="w-8 h-8 text-primary" />
-             </div>
-             <h4 className="font-outfit text-xl font-bold mb-2">Ask the Assistant</h4>
-             <p className="text-xs text-gray-400 mb-6 italic">"How much water does my cassava need this week?"</p>
-             <div className="absolute bottom-6 right-6 w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-ambient-glow cursor-pointer hover:scale-105 transition-transform">
+             <Link href="/assistant" className="flex flex-col items-center group/mic z-10 transition-transform hover:scale-105">
+               <div className="w-16 h-16 rounded-3xl bg-surface-container flex items-center justify-center mb-4 shadow-inner group-hover/mic:bg-surface-variant">
+                   <Mic className="w-8 h-8 text-primary" />
+               </div>
+               <h4 className="font-outfit text-xl font-bold mb-2">Ask the Assistant</h4>
+               <p className="text-xs text-gray-400 mb-6 italic">"How much water does my cassava need this week?"</p>
+             </Link>
+             <Link href="/diagnose" className="absolute bottom-6 right-6 w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-ambient-glow cursor-pointer hover:scale-110 transition-transform z-20">
                <Camera className="w-5 h-5 text-surface-container-lowest" />
-             </div>
+             </Link>
         </div>
 
       </div>
