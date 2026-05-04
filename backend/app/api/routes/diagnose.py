@@ -1,11 +1,16 @@
-from fastapi import APIRouter, File, UploadFile, HTTPException
+from fastapi import APIRouter, File, UploadFile, HTTPException, Form
+from typing import Optional
 from ...orchestration.agents import diagnosis_agent
 from ...models.schemas import DiagnosisResponse
 
 router = APIRouter()
 
 @router.post("/", response_model=DiagnosisResponse)
-async def diagnose_endpoint(file: UploadFile = File(...)):
+async def diagnose_endpoint(
+    file: UploadFile = File(...),
+    text: Optional[str] = Form(None),
+    session_id: Optional[str] = Form(None)
+):
     """
     Two-Stage Diagnosis API
     Takes an image upload, passes it through the orchestration layer where
@@ -16,8 +21,8 @@ async def diagnose_endpoint(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="File uploaded was not an image.")
         
     try:
-        # Route directly to the diagnosis agent
-        result = await diagnosis_agent.handle(file)
+        # Route directly to the diagnosis agent, passing the new text and session_id
+        result = await diagnosis_agent.handle(file, text, session_id)
         
         if "error" in result:
             raise HTTPException(status_code=422, detail=result["error"])

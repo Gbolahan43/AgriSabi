@@ -9,9 +9,11 @@ export interface DiagnosisResponse {
   chemical_treatments: string[];
 }
 
-export async function uploadForDiagnosis(file: File): Promise<DiagnosisResponse> {
+export async function uploadForDiagnosis(file: File, text?: string, sessionId?: string): Promise<DiagnosisResponse> {
   const formData = new FormData();
   formData.append("file", file);
+  if (text) formData.append("text", text);
+  if (sessionId) formData.append("session_id", sessionId);
 
   const response = await fetch(`${API_BASE_URL}/diagnose/`, {
     method: "POST",
