@@ -48,3 +48,31 @@ export async function sendChatMessage(message: string, sessionId: string = "defa
   // Normalize backend 'response' field → frontend 'message' field
   return { message: data.response };
 }
+
+export async function getChatHistory(sessionId: string): Promise<any[]> {
+  const response = await fetch(`${API_BASE_URL}/api/${sessionId}`);
+  if (!response.ok) {
+    // If not found, just return empty
+    if (response.status === 404) return [];
+    throw new Error("Failed to load history.");
+  }
+  const data = await response.json();
+  return data.history || [];
+}
+
+export async function transcribeAudio(audioBlob: Blob): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", audioBlob, "voice.webm");
+
+  const response = await fetch(`${API_BASE_URL}/chat/transcribe`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to transcribe audio.");
+  }
+
+  const data = await response.json();
+  return data.text || "";
+}

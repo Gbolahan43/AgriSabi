@@ -1,8 +1,10 @@
 "use client"
 import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
-import { Send, ImagePlus, Mic, Stethoscope, Loader2, ArrowLeft, Bot, User, Leaf } from 'lucide-react'
+import { Send, ImagePlus, Mic, Stethoscope, Loader2, ArrowLeft, Bot, User, Leaf, StopCircle } from 'lucide-react'
 import * as api from '@/lib/api'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 type Message = {
   id: string;
@@ -24,17 +26,53 @@ export default function OmniChatPage() {
   ]);
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [sessionId, setSessionId] = useState<string>("");
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+
+  // 1. Session & History Initialization
+  useEffect(() => {
+    let currentSession = localStorage.getItem("agrisabi_session_id");
+    if (!currentSession) {
+      currentSession = `session_${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem("agrisabi_session_id", currentSession);
+    }
+    setSessionId(currentSession);
+
+    // Fetch history
+    api.getChatHistory(currentSession).then(history => {
+      if (history && history.length > 0) {
+        const mappedHistory: Message[] = history.map((item: any, index: number) => ({
+          id: `hist_${index}`,
+          role: item.role,
+          type: 'text',
+          content: item.content[0].text
+        }));
+        // Prepend Welcome Message then history
+        setMessages([
+          {
+            id: 'welcome',
+            role: 'assistant',
+            type: 'text',
+            content: "Welcome back! Continuing your conversation."
+          },
+          ...mappedHistory
+        ]);
+      }
+    }).catch(err => console.log("No history found or error", err));
+  }, []);
 
   // Auto-scroll to bottom of chat
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  const handleTextSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleTextSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!inputText.trim()) return;
 
     const userText = inputText;
@@ -46,7 +84,7 @@ export default function OmniChatPage() {
     
     setIsTyping(true);
     try {
-      const response = await api.sendChatMessage(userText);
+      const response = await api.sendChatMessage(userText, sessionId);
       setMessages(prev => [...prev, { 
         id: Date.now().toString(), 
         role: 'assistant', 
@@ -65,17 +103,60 @@ export default function OmniChatPage() {
     }
   };
 
+  // 2. Microphone / STT Logic
+  const toggleRecording = async () => {
+    if (isRecording) {
+      mediaRecorderRef.current?.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      chunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        // Release mic
+        stream.getTracks().forEach(track => track.stop());
+        
+        setIsTyping(true);
+        try {
+          const transcribedText = await api.transcribeAudio(audioBlob);
+          if (transcribedText) {
+            setInputText(transcribedText);
+            // Optionally auto-submit here:
+            // setTimeout(() => handleTextSubmit(), 100);
+          }
+        } catch (err) {
+          console.error("STT Error:", err);
+          alert("Failed to transcribe audio. Please try typing.");
+        } finally {
+          setIsTyping(false);
+        }
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error("Mic error:", err);
+      alert("Microphone access denied or unavailable.");
+    }
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Reset input so the same file can be selected again if needed
     e.target.value = '';
-
-    // Create local preview URL
     const previewUrl = URL.createObjectURL(file);
     
-    // Push User Image Preview Message
     setMessages(prev => [...prev, { 
       id: Date.now().toString(), 
       role: 'user', 
@@ -87,15 +168,12 @@ export default function OmniChatPage() {
     
     try {
       const result = await api.uploadForDiagnosis(file);
-      
-      // Push rich diagnosis bubble
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
         type: 'diagnosis',
         diagnosisData: result
       }]);
-      
     } catch (error: any) {
       setMessages(prev => [...prev, { 
         id: Date.now().toString(), 
@@ -111,7 +189,7 @@ export default function OmniChatPage() {
   return (
     <div className="min-h-screen bg-surface flex flex-col md:flex-row">
       
-      {/* Omni-Chat Sidebar (Desktop) / Quick Actions Header (Mobile) */}
+      {/* Omni-Chat Sidebar */}
       <aside className="w-full md:w-64 bg-surface-container-low border-b md:border-b-0 md:border-r border-surface-container-high p-4 flex flex-col gap-4">
         <Link href="/" className="inline-flex items-center gap-2 text-primary font-semibold hover:opacity-80 transition-opacity pb-4 border-b border-surface-container-high">
           <ArrowLeft className="w-4 h-4" /> Back Home
@@ -119,12 +197,10 @@ export default function OmniChatPage() {
         
         <div className="flex-1">
           <h2 className="text-xs font-bold text-surface-container-highest tracking-wider uppercase mb-3">Quick Tools</h2>
-          
           <Link href="/diagnose" className="w-full flex items-center gap-3 p-3 rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors mb-2 text-sm text-on_surface font-medium border border-transparent hover:border-primary/20">
             <Stethoscope className="w-4 h-4 text-primary" />
             Deep Diagnosis Hub
           </Link>
-          
           <Link href="/assistant" className="w-full flex items-center gap-3 p-3 rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors text-sm text-on_surface font-medium border border-transparent hover:border-secondary/20">
             <Mic className="w-4 h-4 text-secondary" />
             Live Voice Assistant
@@ -142,36 +218,36 @@ export default function OmniChatPage() {
       {/* Main Chat Interface */}
       <main className="flex-1 flex flex-col relative h-[calc(100vh-64px)] md:h-screen">
         
-        {/* Messages Stream */}
         <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6">
           {messages.map(msg => (
             <div key={msg.id} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               
               <div className={`max-w-[85%] md:max-w-[70%] flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                {/* Avatar */}
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 ${msg.role === 'user' ? 'bg-surface-container-high' : 'bg-primary/20 text-primary'}`}>
                   {msg.role === 'user' ? <User className="w-4 h-4 text-gray-400" /> : <Bot className="w-4 h-4" />}
                 </div>
                 
-                {/* Text Message */}
+                {/* 3. React Markdown Text Message */}
                 {msg.type === 'text' && (
                   <div className={`p-4 rounded-2xl ${
                     msg.role === 'user' 
                       ? 'bg-surface-container border border-surface-container-high text-on_surface' 
                       : 'bg-primary/10 border border-primary/20 text-on_surface lg:px-6'
                   }`}>
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.content}</p>
+                    <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-headings:text-primary prose-a:text-secondary hover:prose-a:underline">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {msg.content || ""}
+                      </ReactMarkdown>
+                    </div>
                   </div>
                 )}
                 
-                {/* Image Preview Message (User) */}
                 {msg.type === 'image_preview' && (
                   <div className="p-2 rounded-2xl bg-surface-container border border-surface-container-high">
                     <img src={msg.imageUrl} alt="Uploaded for diagnosis" className="max-w-[200px] md:max-w-[300px] rounded-xl object-cover" />
                   </div>
                 )}
                 
-                {/* Rich Diagnosis Bubble (Assistant) */}
                 {msg.type === 'diagnosis' && msg.diagnosisData && (
                   <div className="p-5 rounded-2xl bg-surface-container-low border border-primary/30 shadow-ambient-glow w-full lg:min-w-[400px]">
                     <div className="flex items-center gap-3 mb-4">
@@ -227,7 +303,6 @@ export default function OmniChatPage() {
             </div>
           ))}
           
-          {/* Typing Indicator */}
           {isTyping && (
              <div className="flex w-full justify-start">
                <div className="flex gap-3 flex-row">
@@ -240,7 +315,6 @@ export default function OmniChatPage() {
                </div>
              </div>
           )}
-          
           <div ref={messagesEndRef} />
         </div>
 
@@ -263,7 +337,17 @@ export default function OmniChatPage() {
               className="p-3 rounded-full bg-surface-container-low text-primary hover:bg-surface-container hover:text-primary-light transition-colors flex-shrink-0 tooltip-trigger"
               title="Upload photo for diagnosis"
             >
-              <ImagePlus className="w-6 h-6" />
+              <ImagePlus className="w-5 h-5" />
+            </button>
+
+            {/* STT Microphone Button */}
+            <button 
+              type="button"
+              onClick={toggleRecording}
+              className={`p-3 rounded-full transition-colors flex-shrink-0 tooltip-trigger ${isRecording ? 'bg-red-500/20 text-red-500 animate-pulse' : 'bg-surface-container-low text-secondary hover:bg-surface-container hover:text-secondary-light'}`}
+              title={isRecording ? "Stop recording" : "Dictate message"}
+            >
+              {isRecording ? <StopCircle className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
             </button>
             
             <div className="flex-1 relative flex items-center">
@@ -271,12 +355,13 @@ export default function OmniChatPage() {
                 type="text" 
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder="Ask about weather, soil, or paste image..."
-                className="w-full bg-surface-container-lowest border border-surface-container-high text-on_surface rounded-full py-4 pl-6 pr-14 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all font-inter"
+                placeholder={isRecording ? "Listening..." : "Ask about weather, soil, or paste image..."}
+                disabled={isRecording}
+                className="w-full bg-surface-container-lowest border border-surface-container-high text-on_surface rounded-full py-4 pl-6 pr-14 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all font-inter disabled:opacity-50"
               />
               <button 
                 type="submit"
-                disabled={!inputText.trim() || isTyping}
+                disabled={!inputText.trim() || isTyping || isRecording}
                 className="absolute right-2 p-2 rounded-full bg-primary text-surface hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 transition-all"
               >
                 <Send className="w-4 h-4" />

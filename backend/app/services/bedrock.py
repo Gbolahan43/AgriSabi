@@ -7,7 +7,7 @@ client = None
 def get_bedrock_client():
     global client
     if not client:
-        client = boto3.client('bedrock-runtime', region_name=settings.AWS_REGION)
+        client = boto3.client('bedrock-runtime', region_name=settings.BEDROCK_REGION)
     return client
 
 async def invoke_converse(messages: list, system_prompt: str, model_id: str = None):

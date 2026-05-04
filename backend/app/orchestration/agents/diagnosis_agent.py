@@ -66,21 +66,24 @@ async def handle(file: UploadFile) -> dict:
     image.save(buffered, format="JPEG", quality=85)  
     img_b64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
     
+    fmt = media_type.split("/")[-1]
+    if fmt == "jpg":
+        fmt = "jpeg"
+        
     messages = [
         {
             "role": "user",
             "content": [
                 {
-                    "type": "text", 
-                    "text": SYMPTOM_EXTRACTION_PROMPT
+                    "image": {
+                        "format": fmt,
+                        "source": {
+                            "bytes": buffered.getvalue()
+                        }
+                    }
                 },
                 {
-                    "type": "image",  # REQUIRED: "image" not just dict
-                    "source": {        # REQUIRED: "source" wrapper
-                        "type": "base64",
-                        "media_type": media_type,  # Dynamic from your util!
-                        "data": img_b64
-                    }
+                    "text": SYMPTOM_EXTRACTION_PROMPT
                 }
             ]
         }
@@ -92,7 +95,13 @@ async def handle(file: UploadFile) -> dict:
             messages=messages,
             inferenceConfig={"maxTokens": 500, "temperature": 0.1}
         )
-        stage1_output = response['output']['message']['content'][0]['text']
+        stage1_output = response['output']['message']['content'][0]['text'].strip()
+        
+        if "```json" in stage1_output:
+            stage1_output = stage1_output.split("```json")[1].split("```")[0].strip()
+        elif "```" in stage1_output:
+            stage1_output = stage1_output.split("```")[1].split("```")[0].strip()
+            
         extraction = json.loads(stage1_output)
         
         if extraction.get("image_quality") == "poor":
@@ -120,6 +129,12 @@ async def handle(file: UploadFile) -> dict:
         )
         
         final_diagnosis_str = response2['output']['message']['content'][0]['text'].strip()
+        
+        if "```json" in final_diagnosis_str:
+            final_diagnosis_str = final_diagnosis_str.split("```json")[1].split("```")[0].strip()
+        elif "```" in final_diagnosis_str:
+            final_diagnosis_str = final_diagnosis_str.split("```")[1].split("```")[0].strip()
+            
         return json.loads(final_diagnosis_str)
         
     except Exception as e:

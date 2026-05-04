@@ -19,7 +19,7 @@ async def attach_websocket_to_nova(websocket: WebSocket, session_id: str, system
     
     try:
         # 1. Initialize Nova Sonic Session (Async Stream)
-        async with session.client('bedrock-runtime', region_name=settings.AWS_REGION) as bedrock_runtime:
+        async with session.client('bedrock-runtime', region_name=settings.BEDROCK_REGION) as bedrock_runtime:
             
             # Note: Bidirectional stream returns an async iterator in aioboto3
             response = await bedrock_runtime.invoke_model_with_bidirectional_stream(

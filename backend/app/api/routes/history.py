@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from ....services.dynamodb import get_session_history  # YOUR dynamo.py
+from app.services.dynamo import get_session_history
 
 router = APIRouter()
 
