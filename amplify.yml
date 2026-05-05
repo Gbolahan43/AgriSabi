@@ -10,7 +10,6 @@ applications:
           commands:
             - npm run build
       artifacts:
-        # For Next.js SSR on Amplify WEB_COMPUTE, output is .next
         baseDirectory: .next
         files:
           - "**/*"
