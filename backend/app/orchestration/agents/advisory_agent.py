@@ -80,7 +80,7 @@ async def handle(payload: dict):
             messages=messages,
             system=[{"text": ADVISORY_SYSTEM_PROMPT}],
             toolConfig=TOOL_CONFIG,
-            inferenceConfig={"maxTokens": 1000, "temperature": 0.2}
+            inferenceConfig={"maxTokens": 800, "temperature": 0.2}
         )
     except Exception as e:
         print(f"Bedrock Error: {e}")
@@ -125,7 +125,7 @@ async def handle(payload: dict):
                 modelId=MODEL_ID,
                 messages=messages,
                 system=[{"text": ADVISORY_SYSTEM_PROMPT}],
-                inferenceConfig={"maxTokens": 1000, "temperature": 0.2}
+                inferenceConfig={"maxTokens": 800, "temperature": 0.2}
             )
             final_text = response2['output']['message']['content'][0]['text']
         except Exception as e:

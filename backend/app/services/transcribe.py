@@ -13,7 +13,7 @@ async def transcribe_audio(audio_bytes: bytes, language: str = "en-US") -> str:
     # Save temp to S3 (Transcribe requirement)
     s3 = boto3.client('s3')
     bucket = settings.S3_BUCKET
-    key = f"transcribe/{uuid.uuid4()}.wav"
+    key = f"transcribe/{uuid.uuid4()}.webm"
     s3.put_object(Bucket=bucket, Key=key, Body=audio_bytes)
     
     job_name = f"agrisabi-{uuid.uuid4()}"
@@ -22,7 +22,7 @@ async def transcribe_audio(audio_bytes: bytes, language: str = "en-US") -> str:
     transcribe.start_transcription_job(
         TranscriptionJobName=job_name,
         Media={'MediaFileUri': f's3://{bucket}/{key}'},
-        MediaSampleRateHertz=16000,
+        MediaFormat='webm',
         LanguageCode=language,
         OutputBucketName=bucket
     )

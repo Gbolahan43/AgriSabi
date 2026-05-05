@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     BEDROCK_REGION: str = "us-east-1"
     BEDROCK_KB_ID: str = ""
     PRIMARY_MODEL_ID: str = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
-    FALLBACK_MODEL_ID: str = "us.amazon.nova-pro-v1:0"
+    FALLBACK_MODEL_ID: str = "us.amazon.nova-lite-v1:0"
     NOVA_SONIC_MODEL_ID: str = "us.amazon.nova-sonic-v1:0"
     S3_BUCKET: str = "agrisabi-audio-bucket-774305598371-us-west-2"
 

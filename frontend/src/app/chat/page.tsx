@@ -5,6 +5,7 @@ import { Send, ImagePlus, Mic, Stethoscope, Loader2, ArrowLeft, Bot, User, Leaf,
 import * as api from '@/lib/api'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import remarkBreaks from 'remark-breaks'
 
 type Message = {
   id: string;
@@ -204,7 +205,7 @@ export default function OmniChatPage() {
                 {msg.type === 'text' && (
                   <div className={`p-4 rounded-2xl ${msg.role === 'user' ? 'bg-surface-container border border-surface-container-high text-on_surface' : 'bg-primary/10 border border-primary/20 text-on_surface lg:px-6'}`}>
                     <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-headings:text-primary prose-a:text-secondary hover:prose-a:underline">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content || ""}</ReactMarkdown>
+                      <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{msg.content || ""}</ReactMarkdown>
                     </div>
                   </div>
                 )}
