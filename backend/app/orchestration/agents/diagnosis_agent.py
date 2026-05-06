@@ -121,7 +121,12 @@ async def handle(file: UploadFile, text: Optional[str] = None, session_id: Optio
     
     try: 
         kb_context = symptom_query(symptom_string)
+        print(f"RAG context retrieved. Length: {len(kb_context)} chars")
+    except Exception as e:
+        print(f"RAG Fetch Error: {e}")
+        kb_context = "Knowledge base lookup failed."
 
+    try:
         synthesis_prompt = TREATMENT_SYNTHESIS_PROMPT.format(
             kb_context=kb_context,
             raw_symptoms=symptom_string
@@ -134,6 +139,7 @@ async def handle(file: UploadFile, text: Optional[str] = None, session_id: Optio
         )
         
         final_diagnosis_str = response2['output']['message']['content'][0]['text'].strip()
+        print(f"Stage 2 raw response: {final_diagnosis_str[:200]}")
         
         if "```json" in final_diagnosis_str:
             final_diagnosis_str = final_diagnosis_str.split("```json")[1].split("```")[0].strip()
@@ -154,5 +160,5 @@ async def handle(file: UploadFile, text: Optional[str] = None, session_id: Optio
         return final_result
         
     except Exception as e:
-        print(f"Stage 2 Error: {e}")
+        print(f"Stage 2 Synthesis Error: {type(e).__name__}: {e}")
         return {"error": "Failed to resolve symptoms against the knowledge base."}
